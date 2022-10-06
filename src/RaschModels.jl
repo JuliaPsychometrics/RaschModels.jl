@@ -1,12 +1,15 @@
 module RaschModels
 
-using AbstractItemResponseModels
+using Reexport
 
-using StatsBase
+@reexport using AbstractItemResponseModels
+@reexport import StatsBase: fit
 
 export RaschModel
 
 include("types.jl")
 include("fit.jl")
+include("irf.jl")
+include("iif.jl")
 
 end
