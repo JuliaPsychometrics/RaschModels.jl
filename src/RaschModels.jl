@@ -1,5 +1,12 @@
 module RaschModels
 
-# Write your package code here.
+using AbstractItemResponseModels
+
+using StatsBase
+
+export RaschModel
+
+include("types.jl")
+include("fit.jl")
 
 end

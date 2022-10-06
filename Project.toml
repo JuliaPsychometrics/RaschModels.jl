@@ -3,8 +3,13 @@ uuid = "bb2289d3-8377-491f-981b-126dc716160d"
 authors = ["Philipp Gewessler"]
 version = "0.1.0"
 
+[deps]
+AbstractItemResponseModels = "0ab3451c-659c-47cd-a7a9-a2d579e209dd"
+StatsBase = "2913bbd2-ae8a-5f71-8c99-4fb6c76f3a91"
+Turing = "fce5fe82-541a-59a6-adf8-730c64b5f9a0"
+
 [compat]
-julia = "1"
+julia = "1.6"
 
 [extras]
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"

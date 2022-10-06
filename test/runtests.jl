@@ -1,6 +1,10 @@
 using RaschModels
 using Test
+using AbstractItemResponseModels.Tests
 
 @testset "RaschModels.jl" begin
-    # Write your tests here.
+    data = rand(0:1, 10, 2)
+
+    test_interface(RaschModel, data, type=:optim)
+    test_interface(RaschModel, data, type=:mcmc)
 end
