@@ -10,7 +10,7 @@ function AbstractItemResponseModels.iif(model::RaschModel{SamplingEstimate}, the
     return _iif(theta, beta, y)
 end
 
-_iif(theta, beta, y) = _irf(theta, beta, y) .* _irf(1 - theta, beta, y)
+_iif(theta, beta, y) = _irf(theta, beta, y) .* _irf(theta, beta, 1 - y)
 
 function AbstractItemResponseModels.information(model::RaschModel{SamplingEstimate}, theta::Real, is)
     niter = size(model.pars, 1)
