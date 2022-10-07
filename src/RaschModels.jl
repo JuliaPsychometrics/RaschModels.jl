@@ -6,6 +6,8 @@ using Reexport
 @reexport import StatsBase: fit
 
 using Turing
+@reexport using Turing: MH, HMC, NUTS
+
 using ReverseDiff
 
 export RaschModel
