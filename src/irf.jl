@@ -1,6 +1,7 @@
 function AbstractItemResponseModels.irf(model::RaschModel{PointEstimate}, theta::Real, i, y::Real)
     checkresponsetype(response_type(model), y)
-    beta = getindex(model.pars, i)
+    parname = Symbol("beta[$i]")
+    beta = model.pars.values[parname]
     return _irf(theta, beta, y)
 end
 
@@ -25,4 +26,12 @@ function AbstractItemResponseModels.expected_score(model::RaschModel{SamplingEst
     return score
 end
 
-expected_score(model::RaschModel, theta::Real) = expected_score(model, theta, 1:size(model.data, 2))
+function AbstractItemResponseModels.expected_score(model::RaschModel{PointEstimate}, theta::Real, is)
+    score = zero(Float64)
+    for i in is
+        score += irf(model, theta, i, 1)
+    end
+    return score
+end
+
+AbstractItemResponseModels.expected_score(model::RaschModel, theta::Real) = AbstractItemResponseModels.expected_score(model, theta, 1:size(model.data, 2))
