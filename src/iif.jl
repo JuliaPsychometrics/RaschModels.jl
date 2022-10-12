@@ -1,6 +1,7 @@
 function AbstractItemResponseModels.iif(model::RaschModel{PointEstimate}, theta::Real, i, y::Real)
     checkresponsetype(response_type(model), y)
-    beta = getindex(model.pars, i)
+    parname = Symbol("beta[$i]")
+    beta = model.pars.values[parname]
     return _iif(theta, beta, y)
 end
 
