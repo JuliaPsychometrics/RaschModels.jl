@@ -1,13 +1,6 @@
-function AbstractItemResponseModels.irf(model::RaschModel{PointEstimate}, theta::Real, i, y::Real)
+function AbstractItemResponseModels.irf(model::RaschModel, theta::Real, i, y::Real)
     checkresponsetype(response_type(model), y)
-    parname = Symbol("beta[$i]")
-    beta = model.pars.values[parname]
-    return _irf(theta, beta, y)
-end
-
-function AbstractItemResponseModels.irf(model::RaschModel{SamplingEstimate}, theta::Real, i, y::Real)
-    checkresponsetype(response_type(model), y)
-    beta = vec(model.pars["beta[$i]"])
+    beta = getitempars(model, i)
     return _irf(theta, beta, y)
 end
 
