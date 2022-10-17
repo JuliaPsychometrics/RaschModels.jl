@@ -32,8 +32,6 @@ jobs:
           version: ${{ matrix.version }}
           arch: ${{ matrix.arch }}
       - uses: julia-actions/cache@v1
-      # manually install AbstractItemResponseModels.jl until it is registered
-      - run: julia --project -e 'using Pkg; Pkg.add(; url="https://github.com/JuliaPsychometrics/AbstractItemResponseModels.jl.git")'
       - uses: julia-actions/julia-buildpkg@v1
       - uses: julia-actions/julia-runtest@v1
       - uses: julia-actions/julia-processcoverage@v1
