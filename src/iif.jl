@@ -15,4 +15,12 @@ function AbstractItemResponseModels.information(model::RaschModel{SamplingEstima
     return info
 end
 
+function AbstractItemResponseModels.information(model::RaschModel{PointEstimate}, theta::Real, is)
+    info = zero(Float64)
+    for i in is
+        info += iif(model, theta, i, 1)
+    end
+    return info
+end
+
 information(model::RaschModel, theta::Real) = information(model, theta, 1:size(model.data, 2))
