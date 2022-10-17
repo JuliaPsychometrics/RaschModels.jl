@@ -1,13 +1,6 @@
-function AbstractItemResponseModels.iif(model::RaschModel{PointEstimate}, theta::Real, i, y::Real)
+function AbstractItemResponseModels.iif(model::RaschModel, theta::Real, i, y::Real)
     checkresponsetype(response_type(model), y)
-    parname = Symbol("beta[$i]")
-    beta = model.pars.values[parname]
-    return _iif(theta, beta, y)
-end
-
-function AbstractItemResponseModels.iif(model::RaschModel{SamplingEstimate}, theta::Real, i, y::Real)
-    checkresponsetype(response_type(model), y)
-    beta = vec(model.pars["beta[$i]"])
+    beta = getitempars(model, i)
     return _iif(theta, beta, y)
 end
 
@@ -18,6 +11,14 @@ function AbstractItemResponseModels.information(model::RaschModel{SamplingEstima
     info = zeros(Float64, niter)
     for i in is
         info .+= iif(model, theta, i, 1)
+    end
+    return info
+end
+
+function AbstractItemResponseModels.information(model::RaschModel{PointEstimate}, theta::Real, is)
+    info = zero(Float64)
+    for i in is
+        info += iif(model, theta, i, 1)
     end
     return info
 end

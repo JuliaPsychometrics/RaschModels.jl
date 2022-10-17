@@ -3,4 +3,7 @@
 
     # MCMC algorithms
     test_interface(RaschModel, data, MH())
+
+    # point estimation
+    test_interface(RaschModel, data, Turing.MLE())
 end

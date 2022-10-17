@@ -4,6 +4,7 @@ using Reexport
 
 @reexport using AbstractItemResponseModels
 @reexport import StatsBase: fit
+using StatsAPI
 
 using Turing
 @reexport using Turing: MH, HMC, NUTS

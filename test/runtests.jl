@@ -3,6 +3,7 @@ using Test
 using AbstractItemResponseModels.Tests
 using MCMCChains
 using Turing
+using Optim
 
 Turing.setprogress!(false)
 
@@ -10,4 +11,6 @@ Turing.setprogress!(false)
     include("test_interface.jl")
     include("utils.jl")
     include("fit.jl")
+    include("irf.jl")
+    include("iif.jl")
 end
