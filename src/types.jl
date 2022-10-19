@@ -3,10 +3,10 @@ mutable struct RaschModel{ET<:EstimationType,DT<:AbstractMatrix,PT} <: ItemRespo
     pars::PT
 end
 
-AbstractItemResponseModels.response_type(::Type{<:RaschModel}) = AbstractItemResponseModels.Dichotomous
-AbstractItemResponseModels.person_dimensionality(::Type{<:RaschModel}) = AbstractItemResponseModels.Univariate
-AbstractItemResponseModels.item_dimensionality(::Type{<:RaschModel}) = AbstractItemResponseModels.Univariate
-AbstractItemResponseModels.estimation_type(::Type{<:RaschModel{ET,PT}}) where {ET,PT} = ET
+response_type(::Type{<:RaschModel}) = AbstractItemResponseModels.Dichotomous
+person_dimensionality(::Type{<:RaschModel}) = AbstractItemResponseModels.Univariate
+item_dimensionality(::Type{<:RaschModel}) = AbstractItemResponseModels.Univariate
+estimation_type(::Type{<:RaschModel{ET,PT}}) where {ET,PT} = ET
 
 """
     getitempars(model::RaschModel, i)
@@ -19,8 +19,8 @@ function getitempars(model::RaschModel{ET,DT,PT}, i::Int) where {ET,DT,PT<:Chain
     return vec(betas)
 end
 
-function getitempars(model::RaschModel{ET,DT,PT}, i) where {ET,DT,PT<:StatsAPI.StatisticalModel}
-    pars = StatsAPI.coef(model.pars)
+function getitempars(model::RaschModel{ET,DT,PT}, i) where {ET,DT,PT<:StatisticalModel}
+    pars = coef(model.pars)
     parname = Symbol("beta[" * string(i) * "]")
     return getindex(pars, parname)
 end
