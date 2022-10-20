@@ -10,6 +10,14 @@ function _irf(theta, beta, y)
     return ifelse(y == 1, prob, 1 .- prob)
 end
 
+function irf(model::RatingScaleModel, theta::Real, i, y::Real)
+    checkresponsetype(response_type(model), y)
+    beta, tau = getitempars(model, i)
+    eta = theta .- (beta .+ tau)
+    p = probs.(PartialCredit.(eachrow(eta)))
+    return getindex.(p, Int(y))
+end
+
 function expected_score(model::RaschModel{SamplingEstimate}, theta::Real, is)
     niter = size(model.pars, 1)
     score = zeros(Float64, niter)

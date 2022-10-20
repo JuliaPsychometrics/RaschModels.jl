@@ -6,6 +6,11 @@ end
 
 _iif(theta, beta, y) = _irf(theta, beta, y) .* _irf(theta, beta, 1 - y)
 
+function iif(model::RatingScaleModel, theta::Real, i, y::Real)
+    category_prob = irf(model, theta, i, y)
+    return category_prob .* (1 .- category_prob)
+end
+
 function information(model::RaschModel{SamplingEstimate}, theta::Real, is)
     niter = size(model.pars, 1)
     info = zeros(Float64, niter)
