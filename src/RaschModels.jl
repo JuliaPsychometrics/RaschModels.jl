@@ -1,12 +1,13 @@
 module RaschModels
 
 using AbstractItemResponseModels
+using LogExpFunctions
 using Optim
 using Reexport
 using ReverseDiff
 using Turing
 
-import StatsAPI: StatisticalModel, coef
+import StatsAPI: StatisticalModel, coef, params
 import AbstractItemResponseModels: response_type, person_dimensionality, item_dimensionality,
     estimation_type, fit, irf, iif, information, expected_score
 
@@ -14,6 +15,7 @@ import AbstractItemResponseModels: response_type, person_dimensionality, item_di
     using Turing: MH, HMC, NUTS, MLE, MAP
 end
 
+export RatingScaleModel
 export RaschModel
 export fit
 export irf, iif, expected_score, information
