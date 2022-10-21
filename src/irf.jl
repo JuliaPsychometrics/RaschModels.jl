@@ -10,12 +10,36 @@ function _irf(theta, beta, y)
     return ifelse(y == 1, prob, 1 .- prob)
 end
 
-function irf(model::RatingScaleModel, theta::Real, i, y::Real)
+function irf(model::RatingScaleModel{ET,DT,PT}, theta::Real, i, y::Real) where {ET<:SamplingEstimate,DT,PT}
     checkresponsetype(response_type(model), y)
     beta, tau = getitempars(model, i)
     eta = theta .- (beta .+ tau)
     p = probs.(PartialCredit.(eachrow(eta)))
     return getindex.(p, Int(y))
+end
+
+function irf(model::RatingScaleModel{ET,DT,PT}, theta::Real, i, y::Real) where {ET<:PointEstimate,DT,PT}
+    checkresponsetype(response_type(model), y)
+    beta, tau = getitempars(model, i)
+    eta = theta .- (beta .+ tau)
+    p = probs(PartialCredit(eta))
+    return getindex(p, Int(y))
+end
+
+function irf(model::PartialCreditModel{ET,DT,PT}, theta::Real, i, y::Real) where {ET<:SamplingEstimate,DT,PT}
+    checkresponsetype(response_type(model), y)
+    beta = getitempars(model, i)
+    eta = theta .- beta
+    p = probs.(PartialCredit.(eachrow(eta)))
+    return getindex.(p, Int(y))
+end
+
+function irf(model::PartialCreditModel{ET,DT,PT}, theta::Real, i, y::Real) where {ET<:PointEstimate,DT,PT}
+    checkresponsetype(response_type(model), y)
+    beta = getitempars(model, i)
+    eta = theta .- beta
+    p = probs(PartialCredit(eta))
+    return getindex(p, Int(y))
 end
 
 function expected_score(model::RaschModel{SamplingEstimate}, theta::Real, is)

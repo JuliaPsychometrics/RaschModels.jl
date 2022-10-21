@@ -1,43 +1,28 @@
 fit(T::Type{<:AbstractRaschModel}, data::AbstractMatrix, alg, args...; kwargs...) = _fit(T, data, alg, args...; kwargs...)
 
-function _fit(T::Type{RaschModel}, data::AbstractMatrix, alg::Turing.InferenceAlgorithm, args...; kwargs...)
+function _fit(T::Type{<:AbstractRaschModel}, data::AbstractMatrix, alg::Turing.InferenceAlgorithm, args...; kwargs...)
     y, i, p = matrix_to_long(data)
     checkresponsetype(response_type(T), y)
 
     Turing.setadbackend(:reversediff)
     Turing.setrdcache(true)
 
-    model = rasch(y, i, p)
+    model = turing_model(T, y, i, p)
     chain = sample(model, alg, args...)
-    return RaschModel{SamplingEstimate,typeof(data),typeof(chain)}(data, chain)
+    return T{SamplingEstimate,typeof(data),typeof(chain)}(data, chain)
 end
 
-function _fit(T::Type{RaschModel}, data::AbstractMatrix, alg::Union{Turing.MLE,Turing.MAP}, args...; kwargs...)
+function _fit(T::Type{<:AbstractRaschModel}, data::AbstractMatrix, alg::Union{Turing.MLE,Turing.MAP}, args...; kwargs...)
     y, i, p = matrix_to_long(data)
     checkresponsetype(response_type(T), y)
-
-    model = rasch(y, i, p)
+    model = turing_model(T, y, i, p)
     estimate = optimize(model, alg, args...)
-    return RaschModel{PointEstimate,typeof(data),typeof(estimate)}(data, estimate)
+    return T{PointEstimate,typeof(data),typeof(estimate)}(data, estimate)
 end
 
-function _fit(T::Type{RatingScaleModel}, data::AbstractMatrix, alg::Turing.InferenceAlgorithm, args...; kargs...)
-    y, i, p = matrix_to_long(data)
-    checkresponsetype(response_type(T), y)
-
-    model = ratingscale(y, i, p)
-    chain = sample(model, alg, args...)
-    return RatingScaleModel{SamplingEstimate,typeof(data),typeof(chain)}(data, chain)
-end
-
-function _fit(T::Type{RatingScaleModel}, data::AbstractMatrix, alg::Union{Turing.MLE,Turing.MAP}, args...; kwargs...)
-    y, i, p = matrix_to_long(data)
-    checkresponsetype(response_type(T), y)
-
-    model = ratingscale(y, i, p)
-    estimate = optimize(model, alg, args...)
-    return RatingScaleModel{PointEstimate,typeof(data),typeof(estimate)}(data, estimate)
-end
+turing_model(::Type{RaschModel}, args...) = rasch(args...)
+turing_model(::Type{RatingScaleModel}, args...) = ratingscale(args...)
+turing_model(::Type{PartialCreditModel}, args...) = partialcredit(args...)
 
 @model function rasch(y, i, p; I=maximum(i), P=maximum(p))
     theta ~ filldist(Normal(), P)
@@ -59,6 +44,25 @@ end
     tau ~ filldist(Normal(), K)
 
     eta = [theta[p[n]] .- (beta[i[n]] .+ tau) for n in eachindex(y)]
+    Turing.@addlogprob! sum(logpdf.(PartialCredit.(eta), y))
+end
+
+@model function partialcredit(y, i, p, ::Type{T}=Float64) where {T}
+    I = maximum(i)
+    P = maximum(p)
+    K = [maximum(y[i.==item]) - 1 for item in 1:I]
+
+    theta ~ filldist(Normal(), P)
+    mu_beta ~ Normal()
+    sigma_beta ~ InverseGamma(3, 2)
+
+    beta = Vector{T}.(undef, K)
+
+    for item in eachindex(beta)
+        beta[item] ~ filldist(Normal(mu_beta, sigma_beta), K[item])
+    end
+
+    eta = [theta[p[n]] .- beta[i[n]] for n in eachindex(y)]
     Turing.@addlogprob! sum(logpdf.(PartialCredit.(eta), y))
 end
 

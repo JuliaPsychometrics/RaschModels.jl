@@ -15,6 +15,7 @@ import AbstractItemResponseModels: response_type, person_dimensionality, item_di
     using Turing: MH, HMC, NUTS, MLE, MAP
 end
 
+export PartialCreditModel
 export RatingScaleModel
 export RaschModel
 export fit
