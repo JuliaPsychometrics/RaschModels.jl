@@ -1,4 +1,4 @@
-@test "Item Information Function" begin
+@testset "Item Information Function" begin
     @test RaschModels._iif(0.0, 0.0, 0) == RaschModels._iif(0.0, 0.0, 1)
     @test RaschModels._iif(0.0, 0.0, 1) == 0.25
 
