@@ -23,8 +23,14 @@ export irf, iif, expected_score, information
 
 include("utils.jl")
 include("types.jl")
+include("priors.jl")
+
+include("models/RaschModel.jl")
+include("models/RatingScaleModel.jl")
+include("models/PartialCreditModel.jl")
+
+include("turing_model.jl")
+
 include("fit.jl")
-include("irf.jl")
-include("iif.jl")
 
 end
