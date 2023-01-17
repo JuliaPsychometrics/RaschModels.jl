@@ -6,55 +6,59 @@ end
 response_type(::Type{<:RaschModel}) = AbstractItemResponseModels.Dichotomous
 person_dimensionality(::Type{<:RaschModel}) = AbstractItemResponseModels.Univariate
 item_dimensionality(::Type{<:RaschModel}) = AbstractItemResponseModels.Univariate
-estimation_type(::Type{<:RaschModel{ET,PT}}) where {ET,PT} = ET
+estimation_type(::Type{<:RaschModel{ET,DT,PT}}) where {ET,DT,PT} = ET
 
 """
     getitempars(model::RaschModel, i)
 
 Fetch the item parameters of `model` for item `i`.
 """
-function getitempars(model::RaschModel{ET,DT,PT}, i::Int) where {ET,DT,PT<:Chains}
-    parname = "beta[" * string(i) * "]"
-    betas = getindex(model.pars, parname)
+function getitempars(model::RaschModel{ET,DT,PT}, i) where {ET,DT,PT<:Chains}
+    parname = Symbol("beta[", i, "]")
+    betas = model.pars.value[var=parname]
     return vec(betas)
 end
 
 function getitempars(model::RaschModel{ET,DT,PT}, i) where {ET,DT,PT<:StatisticalModel}
-    pars = coef(model.pars)
-    parname = Symbol("beta[" * string(i) * "]")
-    return getindex(pars, parname)
+    parname = Symbol("beta[", i, "]")
+    betas = coef(model.pars)
+    return getindex(betas, parname)
 end
 
 """
     irf
 """
-function irf(model::RaschModel, theta::Real, i, y::Real)
+function irf(model::RaschModel, theta, i, y=1)
     checkresponsetype(response_type(model), y)
     beta = getitempars(model, i)
-    return _irf(theta, beta, y)
+    return _irf.(RaschModel, theta, beta, y)
 end
 
-function _irf(theta, beta, y)
-    exp_linpred = exp.(theta .- beta)
-    prob = @. exp_linpred / (1 + exp_linpred)
-    return ifelse(y == 1, prob, 1 .- prob)
+function _irf(::Type{RaschModel}, theta, beta, y)
+    exp_linpred = exp(theta - beta)
+    prob = exp_linpred / (1 + exp_linpred)
+    return ifelse(y == 1, prob, 1 - prob)
 end
 
 """
     iif
 """
-function iif(model::RaschModel, theta::Real, i, y::Real)
+function iif(model::RaschModel, theta, i, y=1)
     checkresponsetype(response_type(model), y)
     beta = getitempars(model, i)
-    return _iif(theta, beta, y)
+    return _iif.(RaschModel, theta, beta, y)
 end
 
-_iif(theta, beta, y) = _irf(theta, beta, y) .* _irf(theta, beta, 1 - y)
+function _iif(::Type{RaschModel}, theta, beta, y)
+    prob = _irf(RaschModel, theta, beta, y)
+    info = prob * (1 - prob)
+    return info
+end
 
 """
     expected_score
 """
-function expected_score(model::RaschModel{SamplingEstimate}, theta::Real, is)
+function expected_score(model::RaschModel{SamplingEstimate}, theta, is)
     niter = size(model.pars, 1)
     score = zeros(Float64, niter)
     for i in is
@@ -63,7 +67,7 @@ function expected_score(model::RaschModel{SamplingEstimate}, theta::Real, is)
     return score
 end
 
-function expected_score(model::RaschModel{PointEstimate}, theta::Real, is)
+function expected_score(model::RaschModel{PointEstimate}, theta, is)
     score = zero(Float64)
     for i in is
         score += irf(model, theta, i, 1)
@@ -71,12 +75,16 @@ function expected_score(model::RaschModel{PointEstimate}, theta::Real, is)
     return score
 end
 
-expected_score(model::RaschModel, theta::Real) = expected_score(model, theta, 1:size(model.data, 2))
+function expected_score(model::RaschModel, theta)
+    items = 1:size(model.data, 2)
+    score = expected_score(model, theta, items)
+    return score
+end
 
 """
     information
 """
-function information(model::RaschModel{SamplingEstimate}, theta::Real, is)
+function information(model::RaschModel{SamplingEstimate}, theta, is)
     niter = size(model.pars, 1)
     info = zeros(Float64, niter)
     for i in is
@@ -85,7 +93,7 @@ function information(model::RaschModel{SamplingEstimate}, theta::Real, is)
     return info
 end
 
-function information(model::RaschModel{PointEstimate}, theta::Real, is)
+function information(model::RaschModel{PointEstimate}, theta, is)
     info = zero(Float64)
     for i in is
         info += iif(model, theta, i, 1)
@@ -93,7 +101,11 @@ function information(model::RaschModel{PointEstimate}, theta::Real, is)
     return info
 end
 
-information(model::RaschModel, theta::Real) = information(model, theta, 1:size(model.data, 2))
+function information(model::RaschModel, theta)
+    items = 1:size(model.data, 2)
+    info = information(model, theta, items)
+    return info
+end
 
 # Turing implementation
 function _turing_model(::Type{RaschModel}; priors)
@@ -102,6 +114,12 @@ function _turing_model(::Type{RaschModel}; priors)
         mu_beta ~ priors.mu_beta
         sigma_beta ~ priors.sigma_beta
         beta ~ filldist(mu_beta + priors.beta_norm * sigma_beta, I)
-        Turing.@addlogprob! sum(logpdf.(BernoulliLogit.(theta[p] .- beta[i]), y))
+
+        eta = theta[p] .- beta[i]
+        Turing.@addlogprob! sum(logpdf.(Rasch.(eta), y))
     end
+end
+
+function Rasch(eta::Real)
+    return BernoulliLogit(eta)
 end
