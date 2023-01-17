@@ -13,6 +13,7 @@ import AbstractItemResponseModels: response_type, person_dimensionality, item_di
 
 @reexport begin
     using Turing: MH, HMC, NUTS, MLE, MAP
+    using Turing: MCMCSerial, MCMCThreads, MCMCDistributed
 end
 
 export PartialCreditModel
