@@ -1,12 +1,16 @@
 @testset "AbstractItemResponseModels.jl Interface" begin
-    data_dichotomous = rand(0:1, 10, 2)
-    data_ordinal = rand(1:4, 10, 3)
+    available_models = [RaschModel, PartialCreditModel]
 
-    # MCMC algorithms
-    test_interface(RaschModel, data_dichotomous, MH(), 100)
-    test_interface(RatingScaleModel, data_ordinal, MH(), 100)
+    for model in available_models
+        @testset "$model" begin
+            if AbstractItemResponseModels.response_type(model) == AbstractItemResponseModels.Dichotomous
+                data = rand(0:1, 10, 2)
+            else
+                data = rand(1:4, 10, 2)
+            end
 
-    # point estimation
-    test_interface(RaschModel, data_dichotomous, MLE())
-    test_interface(RatingScaleModel, data_ordinal, MLE())
+            test_interface(model, data, MH(), 100)
+            test_interface(model, data, MLE())
+        end
+    end
 end

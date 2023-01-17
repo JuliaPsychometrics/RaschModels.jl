@@ -11,11 +11,11 @@ estimation_type(::Type{<:PartialCreditModel{ET,DT,PT}}) where {ET,DT,PT} = ET
 """
     getitempars
 """
-function getitempars(model::PartialCreditModel{ET,DT,PT}, i) where {ET,DT,PT<:Chains}
+function getitempars(model::PartialCreditModel{ET,DT,PT}, i)::Matrix{Float64} where {ET,DT,PT<:Chains}
     parnames = string.(namesingroup(model.pars, :beta))
-    beta_names = filter(x -> occursin("beta[$i]", x), parnames)
-    betas = getindex(model.pars, beta_names)
-    return Array(betas)
+    beta_names = Symbol.(filter(x -> occursin("beta[$i]", x), parnames))
+    betas = Array(model.pars[beta_names])
+    return betas
 end
 
 function getitempars(model::PartialCreditModel{ET,DT,PT}, i) where {ET,DT,PT<:StatisticalModel}
@@ -29,52 +29,153 @@ end
 """
     irf
 """
-function irf(model::PartialCreditModel{ET,DT,PT}, theta::Real, i, y::Real) where {ET<:SamplingEstimate,DT,PT}
-    checkresponsetype(response_type(model), y)
-    beta = getitempars(model, i)
-    eta = theta .- beta
-    p = probs.(PartialCredit.(eachrow(eta)))
-    return getindex.(p, Int(y))
+function irf(model::PartialCreditModel{ET,DT,PT}, theta, i) where {ET<:SamplingEstimate,DT,PT}
+    betas = getitempars(model, i)
+    categories = 1:size(betas, 2)
+    probs = _irf.(PartialCreditModel, theta, eachrow(betas), Ref(categories))
+    return probs
 end
 
-function irf(model::PartialCreditModel{ET,DT,PT}, theta::Real, i, y::Real) where {ET<:PointEstimate,DT,PT}
+function irf(model::PartialCreditModel{ET,DT,PT}, theta, i, y) where {ET<:SamplingEstimate,DT,PT}
     checkresponsetype(response_type(model), y)
-    beta = getitempars(model, i)
-    eta = theta .- beta
-    p = probs(PartialCredit(eta))
-    return getindex(p, Int(y))
+    probs = irf(model, theta, i)
+    return getindex.(probs, Int(y))
+end
+
+function irf(model::PartialCreditModel{ET,DT,PT}, theta, i) where {ET<:PointEstimate,DT,PT}
+    betas = getitempars(model, i)
+    categories = 1:length(betas)
+    probs = _irf(PartialCreditModel, theta, betas, categories)
+    return probs
+end
+
+function irf(model::PartialCreditModel{ET,DT,PT}, theta, i, y) where {ET<:PointEstimate,DT,PT}
+    checkresponsetype(response_type(model), y)
+    probs = irf(model, theta, i)
+    return getindex(probs, Int(y))
+end
+
+function _irf(::Type{PartialCreditModel}, theta, betas, y)
+    extended = vcat(zero(eltype(betas)), betas)
+    cumsum!(extended, extended)
+    softmax!(extended, extended)
+    return extended
 end
 
 """
     iif
 """
+function iif(model::PartialCreditModel{SamplingEstimate}, theta, i)
+    category_probs = irf(model, theta, i)
+    score = expected_score(model, theta, i)
+    return _iif.(PartialCreditModel, category_probs, score)
+end
+
+function iif(model::PartialCreditModel{SamplingEstimate}, theta, i, y)
+    checkresponsetype(response_type(model), y)
+    category_prob = irf(model, theta, i, y)
+    item_information = iif(model, theta, i)
+    return category_prob ./ item_information
+end
+
+function iif(model::PartialCreditModel{PointEstimate}, theta, i)
+    category_probs = irf(model, theta, i)
+    score = expected_score(model, theta, i)
+    return _iif(PartialCreditModel, category_probs, score)
+end
+
+function iif(model::PartialCreditModel{PointEstimate}, theta, i, y)
+    checkresponsetype(response_type(model), y)
+    category_prob = irf(model, theta, i, y)
+    item_information = iif(model, theta, i)
+    return category_prob / item_information
+end
+
+function _iif(::Type{PartialCreditModel}, probs, score)
+    info = zero(Float64)
+    for (category, prob) in enumerate(probs)
+        info += (category - score)^2 * prob
+    end
+    return info
+end
 
 """
     expected_score
 """
+function expected_score(model::PartialCreditModel{SamplingEstimate}, theta, is)
+    niter = size(model.pars, 1)
+    score = zeros(Float64, niter)
+    for i in is
+        category_probs = irf(model, theta, i)
+        categories = 1:length(first(category_probs))
+        category_scores = [probs .* categories for probs in category_probs]
+        score .+= sum.(category_scores)
+    end
+    return score
+end
+
+function expected_score(model::PartialCreditModel, theta)
+    items = 1:size(model.data, 2)
+    score = expected_score(model, theta, items)
+    return score
+end
+
+function expected_score(model::PartialCreditModel{PointEstimate}, theta, is)
+    score = zero(Float64)
+    for i in is
+        category_probs = irf(model, theta, i)
+        categories = 1:length(category_probs)
+        score += sum(category_probs .* categories)
+    end
+    return score
+end
 
 """
     information
 """
+function information(model::PartialCreditModel{SamplingEstimate}, theta, is)
+    niter = size(model.pars, 1)
+    info = zeros(Float64, niter)
+    for i in is
+        info += iif(model, theta, i)
+    end
+    return info
+end
+
+function information(model::PartialCreditModel{PointEstimate}, theta, is)
+    info = zero(Float64)
+    for i in is
+        info += iif(model, theta, i)
+    end
+    return info
+end
+
+function information(model::PartialCreditModel, theta)
+    items = 1:size(model.data, 2)
+    info = information(model, theta, items)
+    return info
+end
 
 # Turing implementation
-@model function partialcredit(y, i, p, ::Type{T}=Float64) where {T}
-    I = maximum(i)
-    P = maximum(p)
-    K = [maximum(y[i.==item]) - 1 for item in 1:I]
+function _turing_model(::Type{PartialCreditModel}; priors)
+    @model function partialcredit(y, i, p, ::Type{T}=Float64; priors=priors) where {T}
+        I = maximum(i)
+        P = maximum(p)
+        K = [maximum(y[i.==item]) - 1 for item in 1:I]
 
-    theta ~ filldist(Normal(), P)
-    mu_beta ~ Normal()
-    sigma_beta ~ InverseGamma(3, 2)
+        theta ~ filldist(priors.theta, P)
+        mu_beta ~ priors.mu_beta
+        sigma_beta ~ priors.sigma_beta
 
-    beta = Vector{T}.(undef, K)
+        beta = Vector{T}.(undef, K)
 
-    for item in eachindex(beta)
-        beta[item] ~ filldist(Normal(mu_beta, sigma_beta), K[item])
+        for item in eachindex(beta)
+            beta[item] ~ filldist(mu_beta + priors.beta_norm * sigma_beta, K[item])
+        end
+
+        eta = [theta[p[n]] .- beta[i[n]] for n in eachindex(y)]
+        Turing.@addlogprob! sum(logpdf.(PartialCredit.(eta), y))
     end
-
-    eta = [theta[p[n]] .- beta[i[n]] for n in eachindex(y)]
-    Turing.@addlogprob! sum(logpdf.(PartialCredit.(eta), y))
 end
 
 function PartialCredit(eta::AbstractVector{<:Real}; check_args=false)
