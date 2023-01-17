@@ -29,27 +29,27 @@ end
 """
     irf
 """
-function irf(model::PartialCreditModel{ET,DT,PT}, theta, i) where {ET<:SamplingEstimate,DT,PT}
+function irf(model::PartialCreditModel{SamplingEstimate}, theta, i)
     betas = getitempars(model, i)
     categories = 1:size(betas, 2)
     probs = _irf.(PartialCreditModel, theta, eachrow(betas), Ref(categories))
     return probs
 end
 
-function irf(model::PartialCreditModel{ET,DT,PT}, theta, i, y) where {ET<:SamplingEstimate,DT,PT}
+function irf(model::PartialCreditModel{SamplingEstimate}, theta, i, y)
     checkresponsetype(response_type(model), y)
     probs = irf(model, theta, i)
     return getindex.(probs, Int(y))
 end
 
-function irf(model::PartialCreditModel{ET,DT,PT}, theta, i) where {ET<:PointEstimate,DT,PT}
+function irf(model::PartialCreditModel{PointEstimate}, theta, i)
     betas = getitempars(model, i)
     categories = 1:length(betas)
     probs = _irf(PartialCreditModel, theta, betas, categories)
     return probs
 end
 
-function irf(model::PartialCreditModel{ET,DT,PT}, theta, i, y) where {ET<:PointEstimate,DT,PT}
+function irf(model::PartialCreditModel{PointEstimate}, theta, i, y)
     checkresponsetype(response_type(model), y)
     probs = irf(model, theta, i)
     return getindex(probs, Int(y))
