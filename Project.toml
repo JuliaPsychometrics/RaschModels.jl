@@ -15,14 +15,14 @@ StatsBase = "2913bbd2-ae8a-5f71-8c99-4fb6c76f3a91"
 Turing = "fce5fe82-541a-59a6-adf8-730c64b5f9a0"
 
 [compat]
-Optim = "1"
-ReverseDiff = "1"
 Distributions = "0.25"
-StatsAPI = "1"
 MCMCChains = "5"
+Optim = "1"
 Reexport = "1"
-Turing = "0.23"
+ReverseDiff = "1"
+StatsAPI = "1"
 StatsBase = "0.33"
+Turing = "0.23, 0.24"
 julia = "1.6"
 
 [extras]
