@@ -33,8 +33,9 @@ Bayesian point estimation is supported by using either
 ## Examples
 ### Bayesian estimation
 Fitting a simple Rasch model with the No-U-Turn-Sampler.
-Note that estimation with `Turing.InterenceAlgorithm` uses the [AbstractMCMC.sample](https://turing.ml/library/AbstractMCMC/dev/api/#Sampling-a-single-chain) interface
-and thus requires an additional argument to specify the number of iterations.
+Note that estimation with `Turing.InterenceAlgorithm` uses the
+[AbstractMCMC.sample](https://turing.ml/library/AbstractMCMC/dev/api/#Sampling-a-single-chain)
+interface and thus requires an additional argument to specify the number of iterations.
 
 ```julia
 X = rand(0:1, 100, 10)

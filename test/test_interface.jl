@@ -1,5 +1,5 @@
 @testset "AbstractItemResponseModels.jl Interface" begin
-    available_models = [RaschModel, PartialCreditModel]
+    available_models = [RaschModel, PartialCreditModel, RatingScaleModel]
 
     for model in available_models
         @testset "$model" begin

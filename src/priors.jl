@@ -8,6 +8,7 @@ Prior distributions for Rasch models.
 - `mu_beta`: The prior distribution for the intercept of the item difficulty distribution
 - `sigma_beta`: The prior distribution for the standard deviation of the item difficulty distribution
 - `beta_norm`: The prior distribution for the standardized item difficulty distribution (see details)
+- `tau`: The prior distribution for threshold parameters in the rating scale model
 
 ## Details
 
@@ -22,4 +23,5 @@ Base.@kwdef struct Prior
     sigma_beta::ContinuousUnivariateDistribution = InverseGamma(3, 2)
     beta_norm::ContinuousUnivariateDistribution = Normal()
     theta::ContinuousUnivariateDistribution = Normal()
+    tau::ContinuousUnivariateDistribution = Normal()
 end
