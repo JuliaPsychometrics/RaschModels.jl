@@ -22,7 +22,7 @@ Distributions = "0.25"
 StatsAPI = "1"
 MCMCChains = "5"
 Reexport = "1"
-Turing = "0.23"
+Turing = "0.23, 0.24"
 StatsBase = "0.33"
 julia = "1.6"
 
