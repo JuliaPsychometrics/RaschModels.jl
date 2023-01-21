@@ -6,7 +6,7 @@ Fit a Rasch model to response `data`.
 ## Arguments
 ### `modeltype`
 An `AbstractRaschModel` type.
-Currently the package implements the following model types:
+Currently RaschModels.jl implements the following model types:
 
 - `PartialCreditModel`
 - `RaschModel`
@@ -16,16 +16,23 @@ Currently the package implements the following model types:
 The observed data matrix.
 It is assumed that each person corresponds to a row and each item to a column in the matrix.
 
+For dichotomous models correct responses are coded as `1` and incorrect responses are coded
+as `0`.
+
+For polytomous models, categories are coded as an integer sequence starting from `1`.
+If your model features e.g. three categories, they are coded as `1`, `2` and `3` respectively.
+
 ### `alg`
 The estimation algorithm.
-For (bayesian) sampling based estimation all `Turing.InferenceAlgorithm` are supported.
+
+For (bayesian) sampling based estimation all `Turing.InferenceAlgorithm` types are supported.
 The following algorithms are reexported from this package:
 
 - `NUTS`: No-U-Turn-Sampler
-- `HMC`: hamiltonian monte carlo
+- `HMC`: Hamiltonian Monte Carlo
 - `MH`: Metropolis-Hastings
 
-Bayesian point estimation is supported by using either
+Bayesian point estimation is supported by
 
 - `MAP`: Maximum a posteriori (Posterior mode)
 - `MLE`: Maximum Likelihood (Posterior mean)
@@ -56,7 +63,6 @@ point estimation algorithms.
 X = rand(0:1, 100, 10)
 rasch_fit = fit(RaschModel, X, MAP())
 ```
-
 """
 function fit(
     modeltype::Type{<:AbstractRaschModel},

@@ -4,17 +4,17 @@
     model_mle = fit(RaschModel, X, MLE())
 
     @testset "irf" begin
-        @test RaschModels._irf(0.0, 0.0, 0) == RaschModels._irf(0.0, 0.0, 1)
-        @test RaschModels._irf(0.0, 0.0, 1) == 0.5
-        @test RaschModels._irf(0.0, -99.9, 1) > 0.99
-        @test RaschModels._irf(0.0, 99.9, 1) < 0.001
+        @test RaschModels._irf(RaschModel, 0.0, 0.0, 0) == RaschModels._irf(RaschModel, 0.0, 0.0, 1)
+        @test RaschModels._irf(RaschModel, 0.0, 0.0, 1) == 0.5
+        @test RaschModels._irf(RaschModel, 0.0, -99.9, 1) > 0.99
+        @test RaschModels._irf(RaschModel, 0.0, 99.9, 1) < 0.001
     end
 
     @testset "iif" begin
-        @test RaschModels._iif(0.0, 0.0, 0) == RaschModels._iif(0.0, 0.0, 1)
-        @test RaschModels._iif(0.0, 0.0, 1) == 0.25
-        @test RaschModels._iif(0.0, 99.9, 1) < 0.001
-        @test RaschModels._iif(0.0, -99.9, 1) < 0.001
+        @test RaschModels._iif(RaschModel, 0.0, 0.0, 0) == RaschModels._iif(RaschModel, 0.0, 0.0, 1)
+        @test RaschModels._iif(RaschModel, 0.0, 0.0, 1) == 0.25
+        @test RaschModels._iif(RaschModel, 0.0, 99.9, 1) < 0.001
+        @test RaschModels._iif(RaschModel, 0.0, -99.9, 1) < 0.001
     end
 
     @testset "expected_score" begin

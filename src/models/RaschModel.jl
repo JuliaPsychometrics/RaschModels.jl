@@ -4,8 +4,6 @@ mutable struct RaschModel{ET<:EstimationType,DT<:AbstractMatrix,PT} <: AbstractR
 end
 
 response_type(::Type{<:RaschModel}) = AbstractItemResponseModels.Dichotomous
-person_dimensionality(::Type{<:RaschModel}) = AbstractItemResponseModels.Univariate
-item_dimensionality(::Type{<:RaschModel}) = AbstractItemResponseModels.Univariate
 estimation_type(::Type{<:RaschModel{ET,DT,PT}}) where {ET,DT,PT} = ET
 
 """
@@ -26,7 +24,14 @@ function getitempars(model::RaschModel{ET,DT,PT}, i) where {ET,DT,PT<:Statistica
 end
 
 """
-    irf
+    irf(model::RaschModel, theta, i, y)
+    irf(model::RaschModel, theta, i)
+
+Evaluate the item response function for a dichotomous Rasch model for item `i` at the ability
+value `theta`.
+
+If the response value `y` is omitted, the item response probability for a correct response
+`y = 1` is returned.
 """
 function irf(model::RaschModel, theta, i, y=1)
     checkresponsetype(response_type(model), y)
@@ -41,7 +46,14 @@ function _irf(::Type{RaschModel}, theta, beta, y)
 end
 
 """
-    iif
+    iif(model::RaschModel, theta, i, y)
+    iif(model::RaschModel, theta, i)
+
+Evaluate the item information function for a dichotomous Rasch model for item `i` at the
+ability value `theta`.
+
+If the response value `y` is omitted, the item information for a correct response `y = 1` is
+returned.
 """
 function iif(model::RaschModel, theta, i, y=1)
     checkresponsetype(response_type(model), y)
@@ -56,7 +68,14 @@ function _iif(::Type{RaschModel}, theta, beta, y)
 end
 
 """
-    expected_score
+    expected_score(model::RaschModel, theta, is)
+    expected_score(model::RaschModel, theta)
+
+Calculate the expected score for a dichotomous Rasch model at ability value `theta` for a
+set of items `is`.
+
+`is` can either be a single item index, an array of item indices, or a range of values.
+If `is` is omitted, the expected score for the whole test is calculated.
 """
 function expected_score(model::RaschModel{SamplingEstimate}, theta, is)
     niter = size(model.pars, 1)
@@ -82,7 +101,14 @@ function expected_score(model::RaschModel, theta)
 end
 
 """
-    information
+    information(model::RaschModel, theta, is)
+    information(model::RaschModel, theta)
+
+Calculate the information for a dichotomous Rasch model at the ability value `theta` for a
+set of items `is`.
+
+`is` can either be a single item index, an array of item indices, or a range of values.
+If `is` is omitted, the information for the whole test is calculated.
 """
 function information(model::RaschModel{SamplingEstimate}, theta, is)
     niter = size(model.pars, 1)

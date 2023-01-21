@@ -80,8 +80,8 @@ function irf(model::PolytomousRaschModel{PointEstimate}, theta, i, y)
     return probs[Int(y)]
 end
 
-function _irf(::Type{PolytomousRaschModel}, theta, beta)
-    extended = vcat(zero(eltype(beta)), beta)
+function _irf(::Type{PolytomousRaschModel}, theta, betas)
+    extended = vcat(zero(eltype(betas)), theta .- betas)
     cumsum!(extended, extended)
     softmax!(extended, extended)
     return extended
@@ -142,7 +142,8 @@ end
 function _iif(model::PolytomousRaschModel{PointEstimate}, theta, i)
     category_probs = irf(model, theta, i)
     score = expected_score(model, theta, i)
-    _iif(PolytomousRaschModel, category_probs, score)
+    info = _iif(PolytomousRaschModel, category_probs, score)
+    return info
 end
 
 function _iif(::Type{PolytomousRaschModel}, probs, score)
@@ -206,7 +207,7 @@ end
 Calculate the information for a polytomous Rasch model at `theta` for a set of items `is`.
 
 `is` can either be a single item index, an array of item indices, or a range of values.
-If `is` is omitted, the expected score for the whole test is calculated.
+If `is` is omitted, the information for the whole test is calculated.
 """
 function information(model::PolytomousRaschModel{SamplingEstimate}, theta, is)
     n_samples = size(model.pars, 1)

@@ -1,5 +1,5 @@
 """
-    PartialCreditModel <:
+    PartialCreditModel <: PolytomousRaschModel
 
 A type representing a Partial Credit Model.
 """
@@ -24,7 +24,7 @@ function _get_item_thresholds(model::PartialCreditModel{ET,DT,PT}, i) where {ET,
 end
 
 function _turing_model(::Type{PartialCreditModel}; priors)
-    @model function partialcredit(y, i, p, ::Type{T}=Float64; priors=priors) where {T}
+    @model function partial_credit_model(y, i, p, ::Type{T}=Float64; priors=priors) where {T}
         I = maximum(i)
         P = maximum(p)
         K = [maximum(y[i.==item]) - 1 for item in 1:I]

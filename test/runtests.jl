@@ -9,10 +9,9 @@ using Optim
 Turing.setprogress!(false)
 
 @testset "RaschModels.jl" begin
+    include("utils.jl")
+
     include("test_interface.jl")
-    # include("models/RaschModel.jl")
-    # include("utils.jl")
-    # include("fit.jl")
-    # include("irf.jl")
-    # include("iif.jl")
+    include("models/RaschModel.jl")
+    include("models/PolytomousRaschModel.jl")
 end

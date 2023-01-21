@@ -1,5 +1,5 @@
 """
-    RatingScaleModel
+    RatingScaleModel <: PolytomousRaschModel
 
 A type representing a Rating Scale Model
 """
