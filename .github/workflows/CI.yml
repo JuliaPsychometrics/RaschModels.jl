@@ -25,12 +25,18 @@ jobs:
           - ubuntu-latest
         arch:
           - x64
+    env:
+      JULIA_PKG_USE_CLI_GIT: true
     steps:
       - uses: actions/checkout@v2
+      - uses: webfactory/ssh-agent@v0.7.0
+        with: 
+          ssh-private-key: ${{ secrets.REGISTRATOR_TOKEN }}
       - uses: julia-actions/setup-julia@v1
         with:
           version: ${{ matrix.version }}
           arch: ${{ matrix.arch }}
+      - run: julia -e 'using Pkg; pkg"registry add git@github.com:JuliaPsychometrics/Registry"'
       - uses: julia-actions/cache@v1
       - uses: julia-actions/julia-buildpkg@v1
       - uses: julia-actions/julia-runtest@v1

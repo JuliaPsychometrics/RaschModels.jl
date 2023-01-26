@@ -1,5 +1,6 @@
 using RaschModels
 using Test
+using AbstractItemResponseModels
 using AbstractItemResponseModels.Tests
 using MCMCChains
 using Turing
@@ -8,9 +9,9 @@ using Optim
 Turing.setprogress!(false)
 
 @testset "RaschModels.jl" begin
-    include("test_interface.jl")
     include("utils.jl")
-    include("fit.jl")
-    include("irf.jl")
-    include("iif.jl")
+
+    include("test_interface.jl")
+    include("models/RaschModel.jl")
+    include("models/PolytomousRaschModel.jl")
 end
