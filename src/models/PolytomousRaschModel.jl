@@ -52,10 +52,12 @@ function irf(model::PolytomousRaschModel{SamplingEstimate}, theta, i)
     n_samples, n_thresholds = size(thresholds)
 
     probs = similar(thresholds, n_samples, n_thresholds + 1)
+    extended = zeros(Float64, n_thresholds + 1)
 
-    for i in 1:n_samples
-        threshold_difficulty = view(beta, i) .+ view(thresholds, i, :)
-        probs[i, :] = _irf(PolytomousRaschModel, theta, threshold_difficulty)
+    eta = @. theta - (beta + thresholds)
+
+    for (i, x) in enumerate(eachrow(eta))
+        probs[i, :] = _irf(PolytomousRaschModel, extended, x)
     end
 
     return probs
@@ -69,8 +71,9 @@ end
 
 function irf(model::PolytomousRaschModel{PointEstimate}, theta, i)
     beta, thresholds = getitempars(model, i)
-    threshold_difficulties = beta .+ thresholds
-    probs = _irf(PolytomousRaschModel, theta, threshold_difficulties)
+    extended = zeros(Float64, length(thresholds) + 1)
+    eta = @. theta - (beta + thresholds)
+    probs = _irf(PolytomousRaschModel, extended, eta)
     return probs
 end
 
@@ -80,8 +83,9 @@ function irf(model::PolytomousRaschModel{PointEstimate}, theta, i, y)
     return probs[Int(y)]
 end
 
-function _irf(::Type{PolytomousRaschModel}, theta, betas)
-    extended = vcat(zero(eltype(betas)), theta .- betas)
+function _irf(::Type{PolytomousRaschModel}, extended, eta)
+    extended .= 0.0
+    extended[2:end] = eta
     cumsum!(extended, extended)
     softmax!(extended, extended)
     return extended
