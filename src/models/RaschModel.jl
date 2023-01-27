@@ -34,10 +34,27 @@ value `theta`.
 If the response value `y` is omitted, the item response probability for a correct response
 `y = 1` is returned.
 """
-function irf(model::RaschModel, theta, i, y=1)
+function irf(model::RaschModel{SamplingEstimate}, theta, i, y=1)
+    probs = zeros(Float64, length(getitempars(model, i)))
+    add_irf!(model, probs, theta, i, y)
+    return probs
+end
+
+function irf(model::RaschModel{PointEstimate}, theta, i, y=1)
     checkresponsetype(response_type(model), y)
     beta = getitempars(model, i)
-    return _irf.(RaschModel, theta, beta, y)
+    return _irf(RaschModel, theta, beta, y)
+end
+
+function add_irf!(model::RaschModel{SamplingEstimate}, probs, theta, i, y)
+    checkresponsetype(response_type(model), y)
+    beta = getitempars(model, i)
+
+    for j in eachindex(beta)
+        probs[j] += _irf(RaschModel, theta, beta[j], y)
+    end
+
+    return nothing
 end
 
 function _irf(::Type{RaschModel}, theta, beta, y)
@@ -56,10 +73,27 @@ ability value `theta`.
 If the response value `y` is omitted, the item information for a correct response `y = 1` is
 returned.
 """
-function iif(model::RaschModel, theta, i, y=1)
+function iif(model::RaschModel{PointEstimate}, theta, i, y=1)
     checkresponsetype(response_type(model), y)
     beta = getitempars(model, i)
-    return _iif.(RaschModel, theta, beta, y)
+    return _iif(RaschModel, theta, beta, y)
+end
+
+function iif(model::RaschModel{SamplingEstimate}, theta, i, y=1)
+    info = zeros(Float64, length(getitempars(model, i)))
+    add_iif!(model, info, theta, i, y)
+    return info
+end
+
+function add_iif!(model::RaschModel{SamplingEstimate}, info, theta, i, y)
+    checkresponsetype(response_type(model), y)
+    beta = getitempars(model, i)
+
+    for j in eachindex(beta)
+        info[j] = _iif(RaschModel, theta, beta[j], y)
+    end
+
+    return nothing
 end
 
 function _iif(::Type{RaschModel}, theta, beta, y)
@@ -81,9 +115,11 @@ If `is` is omitted, the expected score for the whole test is calculated.
 function expected_score(model::RaschModel{SamplingEstimate}, theta, is)
     niter = size(model.pars, 1)
     score = zeros(Float64, niter)
+
     for i in is
-        score .+= irf(model, theta, i, 1)
+        add_irf!(model, score, theta, i, 1)
     end
+
     return score
 end
 
@@ -114,9 +150,11 @@ If `is` is omitted, the information for the whole test is calculated.
 function information(model::RaschModel{SamplingEstimate}, theta, is)
     niter = size(model.pars, 1)
     info = zeros(Float64, niter)
+
     for i in is
-        info .+= iif(model, theta, i, 1)
+        add_iif!(model, info, theta, i, 1)
     end
+
     return info
 end
 
