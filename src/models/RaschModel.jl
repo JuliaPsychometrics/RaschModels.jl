@@ -1,6 +1,7 @@
 mutable struct RaschModel{ET<:EstimationType,DT<:AbstractMatrix,PT} <: AbstractRaschModel
     data::DT
     pars::PT
+    parnames_beta::Vector{Symbol}
 end
 
 response_type(::Type{<:RaschModel}) = AbstractItemResponseModels.Dichotomous
@@ -12,13 +13,13 @@ estimation_type(::Type{<:RaschModel{ET,DT,PT}}) where {ET,DT,PT} = ET
 Fetch the item parameters of `model` for item `i`.
 """
 function getitempars(model::RaschModel{ET,DT,PT}, i) where {ET,DT,PT<:Chains}
-    parname = Symbol("beta[", i, "]")
-    betas = model.pars.value[var=parname]
-    return vec(betas)
+    parname = model.parnames_beta[i]
+    betas = vec(view(model.pars.value, var=parname))
+    return betas
 end
 
 function getitempars(model::RaschModel{ET,DT,PT}, i) where {ET,DT,PT<:StatisticalModel}
-    parname = Symbol("beta[", i, "]")
+    parname = model.parnames_beta[i]
     betas = coef(model.pars)
     return getindex(betas, parname)
 end
