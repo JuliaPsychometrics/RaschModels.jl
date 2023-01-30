@@ -9,8 +9,8 @@
                 data = rand(1:4, 10, 2)
             end
 
-            test_interface(model, data, MH(), 100)
-            test_interface(model, data, MLE())
+            @testset "SamplingEstimate" test_interface(model, data, MH(), 100)
+            @testset "PointEstimate" test_interface(model, data, MLE())
         end
     end
 end
