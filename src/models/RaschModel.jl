@@ -41,21 +41,21 @@ function irf(model::RaschModel{SamplingEstimate}, theta, i, y=1)
     return probs
 end
 
-function irf(model::RaschModel{PointEstimate}, theta, i, y=1)
-    checkresponsetype(response_type(model), y)
-    beta = getitempars(model, i)
-    return _irf(RaschModel, theta, beta, y)
-end
-
-function add_irf!(model::RaschModel{SamplingEstimate}, probs, theta, i, y)
+function add_irf!(model::RaschModel{SamplingEstimate}, probs, theta, i, y; scoring_function=identity)
     checkresponsetype(response_type(model), y)
     beta = getitempars(model, i)
 
     for j in eachindex(beta)
-        probs[j] += _irf(RaschModel, theta, beta[j], y)
+        probs[j] += _irf(RaschModel, theta, beta[j], y) * scoring_function(y)
     end
 
     return nothing
+end
+
+function irf(model::RaschModel{PointEstimate}, theta, i, y=1)
+    checkresponsetype(response_type(model), y)
+    beta = getitempars(model, i)
+    return _irf(RaschModel, theta, beta, y)
 end
 
 function _irf(::Type{RaschModel}, theta, beta, y)
@@ -74,12 +74,6 @@ ability value `theta`.
 If the response value `y` is omitted, the item information for a correct response `y = 1` is
 returned.
 """
-function iif(model::RaschModel{PointEstimate}, theta, i, y=1)
-    checkresponsetype(response_type(model), y)
-    beta = getitempars(model, i)
-    return _iif(RaschModel, theta, beta, y)
-end
-
 function iif(model::RaschModel{SamplingEstimate}, theta, i, y=1)
     info = zeros(Float64, length(getitempars(model, i)))
     add_iif!(model, info, theta, i, y)
@@ -97,15 +91,21 @@ function add_iif!(model::RaschModel{SamplingEstimate}, info, theta, i, y)
     return nothing
 end
 
-function _iif(::Type{RaschModel}, theta, beta, y)
+function iif(model::RaschModel{PointEstimate}, theta, i, y=1)
+    checkresponsetype(response_type(model), y)
+    beta = getitempars(model, i)
+    return _iif(RaschModel, theta, beta, y)
+end
+
+function _iif(::Type{RaschModel}, theta, beta, y; scoring_function=identity)
     prob = _irf(RaschModel, theta, beta, y)
     info = prob * (1 - prob)
     return info
 end
 
 """
-    expected_score(model::RaschModel, theta, is)
-    expected_score(model::RaschModel, theta)
+    expected_score(model::RaschModel, theta, is; scoring_function)
+    expected_score(model::RaschModel, theta; scoring_function)
 
 Calculate the expected score for a dichotomous Rasch model at ability value `theta` for a
 set of items `is`.
@@ -113,34 +113,34 @@ set of items `is`.
 `is` can either be a single item index, an array of item indices, or a range of values.
 If `is` is omitted, the expected score for the whole test is calculated.
 """
-function expected_score(model::RaschModel{SamplingEstimate}, theta, is)
+function expected_score(model::RaschModel{SamplingEstimate}, theta, is; scoring_function=identity)
     niter = size(model.pars, 1)
     score = zeros(Float64, niter)
 
     for i in is
-        add_irf!(model, score, theta, i, 1)
+        add_irf!(model, score, theta, i, 1; scoring_function)
     end
 
     return score
 end
 
-function expected_score(model::RaschModel{PointEstimate}, theta, is)
+function expected_score(model::RaschModel{PointEstimate}, theta, is; scoring_function=identity)
     score = zero(Float64)
     for i in is
-        score += irf(model, theta, i, 1)
+        score += irf(model, theta, i, 1) * scoring_function(1)
     end
     return score
 end
 
-function expected_score(model::RaschModel, theta)
+function expected_score(model::RaschModel, theta; scoring_function=identity)
     items = 1:size(model.data, 2)
-    score = expected_score(model, theta, items)
+    score = expected_score(model, theta, items; scoring_function)
     return score
 end
 
 """
-    information(model::RaschModel, theta, is)
-    information(model::RaschModel, theta)
+    information(model::RaschModel, theta, is; scoring_function)
+    information(model::RaschModel, theta; scoring_function)
 
 Calculate the information for a dichotomous Rasch model at the ability value `theta` for a
 set of items `is`.
@@ -148,28 +148,29 @@ set of items `is`.
 `is` can either be a single item index, an array of item indices, or a range of values.
 If `is` is omitted, the information for the whole test is calculated.
 """
-function information(model::RaschModel{SamplingEstimate}, theta, is)
+function information(model::RaschModel{SamplingEstimate}, theta, is; scoring_function=identity)
     niter = size(model.pars, 1)
     info = zeros(Float64, niter)
 
     for i in is
-        add_iif!(model, info, theta, i, 1)
+        add_iif!(model, info, theta, i, 1; scoring_function)
     end
 
     return info
 end
 
-function information(model::RaschModel{PointEstimate}, theta, is)
+
+function information(model::RaschModel{PointEstimate}, theta, is; scoring_function=identity)
     info = zero(Float64)
     for i in is
-        info += iif(model, theta, i, 1)
+        info += scoring_function(iif(model, theta, i, 1))
     end
     return info
 end
 
-function information(model::RaschModel, theta)
+function information(model::RaschModel, theta; scoring_function=identity)
     items = 1:size(model.data, 2)
-    info = information(model, theta, items)
+    info = information(model, theta, items; scoring_function)
     return info
 end
 

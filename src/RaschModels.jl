@@ -10,7 +10,11 @@ using StaticArrays
 
 import StatsAPI: StatisticalModel, coef, params
 import AbstractItemResponseModels: response_type, person_dimensionality, item_dimensionality,
-    estimation_type, fit, irf, iif, information, expected_score
+    estimation_type
+
+@reexport begin
+    import AbstractItemResponseModels: irf, iif, expected_score, information, fit
+end
 
 @reexport begin
     using Turing: MH, HMC, NUTS, MLE, MAP
@@ -20,8 +24,6 @@ end
 export PartialCreditModel
 export RatingScaleModel
 export RaschModel
-export fit
-export irf, iif, expected_score, information
 
 include("utils.jl")
 include("types.jl")

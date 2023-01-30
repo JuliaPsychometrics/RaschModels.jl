@@ -19,15 +19,33 @@
 
     @testset "expected_score" begin
         @test expected_score(model_mcmc, 0.0, 1) == irf(model_mcmc, 0.0, 1)
-        @test expected_score(model_mle, 0.0, 1) == irf(model_mle, 0.0, 1)
         @test expected_score(model_mcmc, 0.0) == sum(irf(model_mcmc, 0.0, i) for i in 1:size(X, 2))
+        @test expected_score(model_mcmc, 0.0) == expected_score(model_mcmc, 0.0; scoring_function=identity)
+        @test expected_score(model_mcmc, 0.0, scoring_function=x -> 0) == zeros(100)
+        @test expected_score(model_mcmc, 0.0, 1, scoring_function=log) == log.(irf(model_mcmc, 0.0, 1))
+        @test expected_score(model_mcmc, 0.0, 1:2, scoring_function=log) == log.(irf(model_mcmc, 0.0, 1)) .+ log.(irf(model_mcmc, 0.0, 2))
+
+        @test expected_score(model_mle, 0.0, 1) == irf(model_mle, 0.0, 1)
         @test expected_score(model_mle, 0.0) == sum(irf(model_mle, 0.0, i) for i in 1:size(X, 2))
+        @test expected_score(model_mle, 0.0) == expected_score(model_mle, 0.0; scoring_function=identity)
+        @test expected_score(model_mle, 0.0, scoring_function=x -> 0) == 0
+        @test expected_score(model_mle, 0.0, 1; scoring_function=log) == log(irf(model_mle, 0.0, 1))
+        @test expected_score(model_mle, 0.0, 1:2, scoring_function=log) == log(irf(model_mle, 0.0, 1)) .+ log(irf(model_mle, 0.0, 2))
     end
 
     @testset "information" begin
         @test information(model_mcmc, 0.0, 1) == iif(model_mcmc, 0.0, 1)
-        @test information(model_mle, 0.0, 1) == iif(model_mle, 0.0, 1)
         @test information(model_mcmc, 0.0) == sum(iif(model_mcmc, 0.0, i) for i in 1:size(X, 2))
+        @test information(model_mcmc, 0.0) == information(model_mcmc, 0.0, scoring_function=identity)
+        @test information(model_mcmc, 0.0, scoring_function=x -> 0) == zeros(100)
+        @test information(model_mcmc, 0.0, 1, scoring_function=log) == log.(iif(model_mcmc, 0.0, 1))
+        @test information(model_mcmc, 0.0, 1:2, scoring_function=log) == log.(iif(model_mcmc, 0.0, 1)) .+ log.(iif(model_mcmc, 0.0, 2))
+
+        @test information(model_mle, 0.0, 1) == iif(model_mle, 0.0, 1)
         @test information(model_mle, 0.0) == sum(iif(model_mle, 0.0, i) for i in 1:size(X, 2))
+        @test information(model_mle, 0.0) == information(model_mle, 0.0, scoring_function=identity)
+        @test information(model_mle, 0.0, scoring_function=x -> 0) == 0
+        @test information(model_mle, 0.0, 1, scoring_function=log) == log(iif(model_mle, 0.0, 1))
+        @test information(model_mle, 0.0, 1:2, scoring_function=log) == log(iif(model_mle, 0.0, 1)) .+ log(iif(model_mle, 0.0, 2))
     end
 end
