@@ -75,17 +75,19 @@ If the response value `y` is omitted, the item information for a correct respons
 returned.
 """
 function iif(model::RaschModel{SamplingEstimate}, theta, i, y=1)
-    info = zeros(Float64, length(getitempars(model, i)))
+    n_iter = length(getitempars(model, i))
+    info = zeros(Float64, n_iter)
     add_iif!(model, info, theta, i, y)
     return info
 end
 
-function add_iif!(model::RaschModel{SamplingEstimate}, info, theta, i, y)
+function add_iif!(model::RaschModel{SamplingEstimate}, info, theta, i, y, scoring_function=identity)
     checkresponsetype(response_type(model), y)
     beta = getitempars(model, i)
+    scoring_function(1)  # for some reason this makes the allocations go away?
 
     for j in eachindex(beta)
-        info[j] = _iif(RaschModel, theta, beta[j], y)
+        info[j] += _iif(RaschModel, theta, beta[j]; scoring_function)
     end
 
     return nothing
@@ -94,12 +96,18 @@ end
 function iif(model::RaschModel{PointEstimate}, theta, i, y=1)
     checkresponsetype(response_type(model), y)
     beta = getitempars(model, i)
-    return _iif(RaschModel, theta, beta, y)
+    return _iif(RaschModel, theta, beta)
 end
 
-function _iif(::Type{RaschModel}, theta, beta, y; scoring_function=identity)
-    prob = _irf(RaschModel, theta, beta, y)
-    info = prob * (1 - prob)
+function _iif(::Type{RaschModel}, theta, beta; scoring_function)
+    expected = _irf(RaschModel, theta, beta, 1) * scoring_function(1)
+    info = zero(Float64)
+
+    for y in 0:1
+        prob = _irf(RaschModel, theta, beta, y)
+        info += (scoring_function(y) - expected)^2 * prob
+    end
+
     return info
 end
 
@@ -158,7 +166,6 @@ function information(model::RaschModel{SamplingEstimate}, theta, is; scoring_fun
 
     return info
 end
-
 
 function information(model::RaschModel{PointEstimate}, theta, is; scoring_function=identity)
     info = zero(Float64)
