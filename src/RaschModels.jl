@@ -6,6 +6,7 @@ using Optim
 using Reexport
 using ReverseDiff
 using Turing
+using StaticArrays
 
 import StatsAPI: StatisticalModel, coef, params
 import AbstractItemResponseModels: response_type, person_dimensionality, item_dimensionality,

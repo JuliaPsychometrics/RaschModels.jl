@@ -90,6 +90,7 @@ function _fit(
     model = turing_model(modeltype; priors)
     chain = sample(model(y, i, p), alg, args...)
     parnames_beta = [Symbol("beta[", i, "]") for i in 1:size(data, 2)]
+
     return modeltype{SamplingEstimate,typeof(data),typeof(chain)}(data, chain, parnames_beta)
 end
 

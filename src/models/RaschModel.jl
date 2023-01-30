@@ -35,7 +35,8 @@ If the response value `y` is omitted, the item response probability for a correc
 `y = 1` is returned.
 """
 function irf(model::RaschModel{SamplingEstimate}, theta, i, y=1)
-    probs = zeros(Float64, length(getitempars(model, i)))
+    n_iter = length(getitempars(model, i))
+    probs = zeros(Float64, n_iter)
     add_irf!(model, probs, theta, i, y)
     return probs
 end
