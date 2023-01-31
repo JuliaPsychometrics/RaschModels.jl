@@ -41,7 +41,7 @@ function irf(model::RaschModel{SamplingEstimate}, theta, i, y=1)
     return probs
 end
 
-function add_irf!(model::RaschModel{SamplingEstimate}, probs, theta, i, y; scoring_function=identity)
+function add_irf!(model::RaschModel{SamplingEstimate}, probs, theta, i, y; scoring_function::F=identity) where {F}
     checkresponsetype(response_type(model), y)
     beta = getitempars(model, i)
 
@@ -81,10 +81,9 @@ function iif(model::RaschModel{SamplingEstimate}, theta, i, y=1)
     return info
 end
 
-function add_iif!(model::RaschModel{SamplingEstimate}, info, theta, i, y, scoring_function=identity)
+function add_iif!(model::RaschModel{SamplingEstimate}, info, theta, i, y; scoring_function::F=identity) where {F}
     checkresponsetype(response_type(model), y)
     beta = getitempars(model, i)
-    scoring_function(1)  # for some reason this makes the allocations go away?
 
     for j in eachindex(beta)
         info[j] += _iif(RaschModel, theta, beta[j]; scoring_function)
@@ -99,7 +98,7 @@ function iif(model::RaschModel{PointEstimate}, theta, i, y=1)
     return _iif(RaschModel, theta, beta)
 end
 
-function _iif(::Type{RaschModel}, theta, beta; scoring_function)
+function _iif(::Type{RaschModel}, theta, beta; scoring_function::F=identity) where {F}
     expected = _irf(RaschModel, theta, beta, 1) * scoring_function(1)
     info = zero(Float64)
 
@@ -121,7 +120,7 @@ set of items `is`.
 `is` can either be a single item index, an array of item indices, or a range of values.
 If `is` is omitted, the expected score for the whole test is calculated.
 """
-function expected_score(model::RaschModel{SamplingEstimate}, theta, is; scoring_function=identity)
+function expected_score(model::RaschModel{SamplingEstimate}, theta, is; scoring_function::F=identity) where {F}
     niter = size(model.pars, 1)
     score = zeros(Float64, niter)
 
@@ -132,7 +131,7 @@ function expected_score(model::RaschModel{SamplingEstimate}, theta, is; scoring_
     return score
 end
 
-function expected_score(model::RaschModel{PointEstimate}, theta, is; scoring_function=identity)
+function expected_score(model::RaschModel{PointEstimate}, theta, is; scoring_function::F=identity) where {F}
     score = zero(Float64)
     for i in is
         score += irf(model, theta, i, 1) * scoring_function(1)
@@ -140,7 +139,7 @@ function expected_score(model::RaschModel{PointEstimate}, theta, is; scoring_fun
     return score
 end
 
-function expected_score(model::RaschModel, theta; scoring_function=identity)
+function expected_score(model::RaschModel, theta; scoring_function::F=identity) where {F}
     items = 1:size(model.data, 2)
     score = expected_score(model, theta, items; scoring_function)
     return score
@@ -156,7 +155,7 @@ set of items `is`.
 `is` can either be a single item index, an array of item indices, or a range of values.
 If `is` is omitted, the information for the whole test is calculated.
 """
-function information(model::RaschModel{SamplingEstimate}, theta, is; scoring_function=identity)
+function information(model::RaschModel{SamplingEstimate}, theta, is; scoring_function::F=identity) where {F}
     niter = size(model.pars, 1)
     info = zeros(Float64, niter)
 
@@ -167,7 +166,7 @@ function information(model::RaschModel{SamplingEstimate}, theta, is; scoring_fun
     return info
 end
 
-function information(model::RaschModel{PointEstimate}, theta, is; scoring_function=identity)
+function information(model::RaschModel{PointEstimate}, theta, is; scoring_function::F=identity) where {F}
     info = zero(Float64)
     for i in is
         info += scoring_function(iif(model, theta, i, 1))
@@ -175,7 +174,7 @@ function information(model::RaschModel{PointEstimate}, theta, is; scoring_functi
     return info
 end
 
-function information(model::RaschModel, theta; scoring_function=identity)
+function information(model::RaschModel, theta; scoring_function::F=identity) where {F}
     items = 1:size(model.data, 2)
     info = information(model, theta, items; scoring_function)
     return info
