@@ -6,6 +6,8 @@ A type representing a Partial Credit Model.
 struct PartialCreditModel{ET<:EstimationType,DT<:AbstractMatrix,PT} <: PolytomousRaschModel{ET,PT}
     data::DT
     pars::PT
+    parnames_beta::Vector{Symbol}
+    parnames_tau::Vector{Vector{Symbol}}
 end
 
 function _get_item_thresholds(model::PartialCreditModel{ET,DT,PT}, i)::Matrix{Float64} where {ET,DT,PT<:Chains}

@@ -64,45 +64,61 @@ X = rand(0:1, 100, 10)
 rasch_fit = fit(RaschModel, X, MAP())
 ```
 """
-function fit(
-    modeltype::Type{<:AbstractRaschModel},
-    data::AbstractMatrix,
-    alg,
-    args...;
-    kwargs...
-)
+# 0. user facing level
+function fit(modeltype::Type{<:AbstractRaschModel}, data::AbstractMatrix, alg, args...; kwargs...)
     _fit(modeltype, data, alg, args...; kwargs...)
 end
 
-function _fit(
-    modeltype::Type{<:AbstractRaschModel},
-    data::AbstractMatrix,
-    alg::Turing.InferenceAlgorithm,
-    args...;
-    priors::Prior=Prior()
-)
-    y, i, p = matrix_to_long(data)
-    checkresponsetype(response_type(modeltype), y)
+# 1. dispatch on model type
+function _fit(modeltype::Type{RaschModel}, data, alg, args...; kwargs...)
+    fitted, ET = _fit_by_alg(modeltype, data, alg, args...; kwargs...)
+    parnames = betanames(size(data, 2))
 
-    Turing.setadbackend(:reversediff)
-    Turing.setrdcache(true)
+    DT = typeof(data)
+    PT = typeof(fitted)
 
-    model = turing_model(modeltype; priors)
-    chain = sample(model(y, i, p), alg, args...)
-    return modeltype{SamplingEstimate,typeof(data),typeof(chain)}(data, chain)
+    return RaschModel{ET,DT,PT}(data, fitted, parnames)
 end
 
-function _fit(
-    modeltype::Type{<:AbstractRaschModel},
-    data::AbstractMatrix,
-    alg::Union{Turing.MLE,Turing.MAP},
-    args...;
-    priors::Prior=Prior()
-)
-    y, i, p = matrix_to_long(data)
-    checkresponsetype(response_type(modeltype), y)
+function _fit(modeltype::Type{RatingScaleModel}, data, alg, args...; kwargs...)
+    n_items = size(data, 2)
+    n_thresholds = maximum(data) - 1
 
+    fitted, ET = _fit_by_alg(modeltype, data, alg, args...; kwargs...)
+
+    parnames_beta = betanames(n_items)
+    parnames_tau = taunames(n_thresholds)
+
+    DT = typeof(data)
+    PT = typeof(fitted)
+
+    return RatingScaleModel{ET,DT,PT}(data, fitted, parnames_beta, parnames_tau)
+end
+
+function _fit(modeltype::Type{PartialCreditModel}, data, alg, args...; kwargs...)
+    n_items = size(data, 2)
+
+    fitted, ET = _fit_by_alg(modeltype, data, alg, args...; kwargs...)
+
+    parnames_beta = betanames(n_items)
+    parnames_tau = [taunames(maximum(col) - 1, item=i) for (i, col) in enumerate(eachcol(data))]
+
+    DT = typeof(data)
+    PT = typeof(fitted)
+
+    return PartialCreditModel{ET,DT,PT}(data, fitted, parnames_beta, parnames_tau)
+end
+
+function _fit_by_alg(modeltype, data, alg::Turing.InferenceAlgorithm, args...; priors::Prior=Prior(), kwargs...)
+    y, i, p = matrix_to_long(data)
     model = turing_model(modeltype; priors)
-    estimate = optimize(model(y, i, p), alg, args...)
-    return modeltype{PointEstimate,typeof(data),typeof(estimate)}(data, estimate)
+    chain = sample(model(y, i, p), alg, args...; kwargs...)
+    return chain, SamplingEstimate
+end
+
+function _fit_by_alg(modeltype, data, alg::Union{Turing.MAP,Turing.MLE}, args...; priors::Prior=Prior(), kwargs...)
+    y, i, p = matrix_to_long(data)
+    model = turing_model(modeltype; priors)
+    estimate = optimize(model(y, i, p), alg, args...; kwargs...)
+    return estimate, PointEstimate
 end
