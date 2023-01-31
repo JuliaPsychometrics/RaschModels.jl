@@ -6,6 +6,8 @@ A type representing a Rating Scale Model
 struct RatingScaleModel{ET<:EstimationType,DT<:AbstractMatrix,PT} <: PolytomousRaschModel{ET,PT}
     data::DT
     pars::PT
+    parnames_beta::Vector{Symbol}
+    parnames_tau::Vector{Symbol}
 end
 
 function _get_item_thresholds(model::RatingScaleModel{ET,DT,PT}, i)::Matrix{Float64} where {ET,DT,PT<:Chains}

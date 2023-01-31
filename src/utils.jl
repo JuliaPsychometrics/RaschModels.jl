@@ -35,3 +35,22 @@ function construct_response_vector(m::AbstractMatrix{Union{Missing,T}}, N; dropm
     type = dropmissing ? T : Union{Missing,T}
     return Vector{type}(undef, N)
 end
+
+"""
+    betnames(n)
+
+Construct a vector of parameter names for item difficulties/locations.
+"""
+function betanames(n)
+    return [Symbol("beta[", i, "]") for i in 1:n]
+end
+
+"""
+    taunames(n; item=nothing)
+
+Construct a vector of parameter names for item thresholds.
+"""
+function taunames(n; item=nothing)
+    item_str = isnothing(item) ? "" : string("[", item, "]")
+    return [Symbol("tau", item_str, "[", i, "]") for i in 1:n]
+end
