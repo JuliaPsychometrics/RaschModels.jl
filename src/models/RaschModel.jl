@@ -13,13 +13,13 @@ estimation_type(::Type{<:RaschModel{ET,DT,PT}}) where {ET,DT,PT} = ET
 Fetch the item parameters of `model` for item `i`.
 """
 function getitempars(model::RaschModel{ET,DT,PT}, i) where {ET,DT,PT<:Chains}
-    parname = model.parnames_beta[i]
+    parname = model.parnames[i]
     betas = vec(view(model.pars.value, var=parname))
     return betas
 end
 
 function getitempars(model::RaschModel{ET,DT,PT}, i) where {ET,DT,PT<:StatisticalModel}
-    parname = model.parnames_beta[i]
+    parname = model.parnames[i]
     betas = coef(model.pars)
     return getindex(betas, parname)
 end

@@ -17,10 +17,9 @@ function _get_item_thresholds(model::RatingScaleModel{ET,DT,PT}, i)::Matrix{Floa
 end
 
 function _get_item_thresholds(model::RatingScaleModel{ET,DT,PT}, i) where {ET,DT,PT<:StatisticalModel}
-    parnames = string.(params(model.pars))
     pars = coef(model.pars)
-    threshold_names = filter(x -> occursin("tau", x), parnames)
-    thresholds = getindex(pars, Symbol.(threshold_names))
+    threshold_index = getindex.(pars.dicts, model.parnames_tau)
+    thresholds = view(pars.array, threshold_index)
     return vec(thresholds)
 end
 

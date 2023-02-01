@@ -25,14 +25,14 @@ end
 
 # MCMCChains
 function _get_item_parameter(model::PolytomousRaschModel{ET,PT}, i) where {ET,PT<:Chains}
-    parname = Symbol("beta[", i, "]")
+    parname = model.parnames_beta[i]
     betas = model.pars.value[var=parname]
     return vec(betas)
 end
 
 # StatisticalModel
 function _get_item_parameter(model::PolytomousRaschModel{ET,PT}, i) where {ET,PT<:StatisticalModel}
-    parname = Symbol("beta[", i, "]")
+    parname = model.parnames_beta[i]
     pars = coef(model.pars)
     return getindex(pars, parname)
 end
