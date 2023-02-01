@@ -1,7 +1,7 @@
 mutable struct RaschModel{ET<:EstimationType,DT<:AbstractMatrix,PT} <: AbstractRaschModel
     data::DT
     pars::PT
-    parnames_beta::Vector{Symbol}
+    parnames::Vector{Symbol}
 end
 
 response_type(::Type{<:RaschModel}) = AbstractItemResponseModels.Dichotomous

@@ -23,4 +23,15 @@
         @test long_nodropped_missing[2] == [1, 1, 2, 2]
         @test long_nodropped_missing[3] == [1, 2, 1, 2]
     end
+
+    @testset "betanames" begin
+        @test RaschModels.betanames(1) == [Symbol("beta[1]")]
+        @test RaschModels.betanames(2) == [Symbol("beta[1]"), Symbol("beta[2]")]
+    end
+
+    @testset "taunames" begin
+        @test RaschModels.taunames(1) == [Symbol("tau[1]")]
+        @test RaschModels.taunames(2) == [Symbol("tau[1]"), Symbol("tau[2]")]
+        @test RaschModels.taunames(2, item=1) == [Symbol("tau[1][1]"), Symbol("tau[1][2]")]
+    end
 end

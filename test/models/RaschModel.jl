@@ -3,6 +3,14 @@
     model_mcmc = fit(RaschModel, X, MH(), 100)
     model_mle = fit(RaschModel, X, MLE())
 
+    @testset "Model construction" begin
+        @test estimation_type(model_mcmc) == SamplingEstimate
+        @test model_mcmc.parnames == [Symbol("beta[1]"), Symbol("beta[2]"), Symbol("beta[3]")]
+
+        @test estimation_type(model_mle) == PointEstimate
+        @test model_mle.parnames == [Symbol("beta[1]"), Symbol("beta[2]"), Symbol("beta[3]")]
+    end
+
     @testset "irf" begin
         @test RaschModels._irf(RaschModel, 0.0, 0.0, 0) == RaschModels._irf(RaschModel, 0.0, 0.0, 1)
         @test RaschModels._irf(RaschModel, 0.0, 0.0, 1) == 0.5
