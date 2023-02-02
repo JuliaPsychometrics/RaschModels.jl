@@ -169,7 +169,8 @@ end
 function information(model::RaschModel{PointEstimate}, theta, is; scoring_function::F=identity) where {F}
     info = zero(Float64)
     for i in is
-        info += scoring_function(iif(model, theta, i, 1))
+        beta = getitempars(model, i)
+        info += _iif(RaschModel, theta, beta; scoring_function)
     end
     return info
 end
