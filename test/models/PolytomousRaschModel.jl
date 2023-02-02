@@ -13,16 +13,16 @@
     partial_credit(k, K=n_categories) = (k - 1) / (K - 1)
 
     @testset "irf" begin
-        @test length(RaschModels._irf(PRM, 0.0, zeros(1))) == 2
-        @test length(RaschModels._irf(PRM, 0.0, zeros(2))) == 3
+        @test length(RaschModels._irf(PRM, zeros(2), zeros(1))) == 2
+        @test length(RaschModels._irf(PRM, zeros(3), zeros(2))) == 3
 
-        @test RaschModels._irf(PRM, 0.0, zeros(1)) == [0.5, 0.5]
-        @test RaschModels._irf(PRM, 1e9, zeros(1)) ≈ [0, 1]
-        @test RaschModels._irf(PRM, -1e9, zeros(1)) ≈ [1, 0]
+        @test RaschModels._irf(PRM, zeros(2), zeros(1)) == [0.5, 0.5]
+        @test RaschModels._irf(PRM, zeros(2), [1e9]) ≈ [0, 1]
+        @test RaschModels._irf(PRM, zeros(2), [-1e9]) ≈ [1, 0]
 
-        @test RaschModels._irf(PRM, 0.0, zeros(2)) == fill(1 / 3, 3)
-        @test RaschModels._irf(PRM, 1e9, zeros(2)) ≈ [0, 0, 1]
-        @test RaschModels._irf(PRM, -1e9, zeros(2)) ≈ [1, 0, 0]
+        @test RaschModels._irf(PRM, zeros(3), zeros(2)) == fill(1 / 3, 3)
+        @test RaschModels._irf(PRM, zeros(3), [0, 1e9]) ≈ [0, 0, 1]
+        @test RaschModels._irf(PRM, zeros(3), [-1e9, 0]) ≈ [1, 0, 0]
 
         @test length(irf(rsm_mcmc, 0.0, 1, 1)) == n_iter
         @test size(irf(rsm_mcmc, 0.0, 1)) == (n_iter, n_categories)

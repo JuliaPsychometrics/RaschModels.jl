@@ -26,8 +26,8 @@ end
 # MCMCChains
 function _get_item_parameter(model::PolytomousRaschModel{ET,PT}, i) where {ET,PT<:Chains}
     parname = model.parnames_beta[i]
-    betas = model.pars.value[var=parname]
-    return vec(betas)
+    betas = vec(view(model.pars.value, var=parname))
+    return betas
 end
 
 # StatisticalModel
