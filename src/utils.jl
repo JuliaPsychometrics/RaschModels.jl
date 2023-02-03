@@ -37,7 +37,7 @@ function construct_response_vector(m::AbstractMatrix{Union{Missing,T}}, N; dropm
 end
 
 """
-    betnames(n)
+    betanames(n)
 
 Construct a vector of parameter names for item difficulties/locations.
 """
@@ -72,7 +72,7 @@ end
 """
     normalize_sumzero!(::Type{RaschModel}, values::AbstractVector, vcov::AbstractMatrix{T}; I::Int = length(values)) where {T<:AbstractFloat}
 
-normalize estimated values from a Rasch model from β[1]=0 to ∑β = 0
+normalize estimated values of a Rasch model from β[1]=0 to ∑β = 0
 """
 function normalize_sumzero!(values::AbstractVector, vcov::AbstractMatrix{T}; I::Int = length(values)) where {T<:AbstractFloat}
     values[1] == 0 || throw(DomainError("first element of values must be zero."))
