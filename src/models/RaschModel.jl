@@ -25,6 +25,23 @@ function getitempars(model::RaschModel{ET,DT,PT}, i) where {ET,DT,PT<:Statistica
 end
 
 """
+    getpersonpars(model::RaschModel, p)
+
+Fetch the person parameters of `model` for person `p`.
+"""
+function getpersonpars(model::RaschModel{ET,DT,PT}, p) where {ET,DT,PT<:Chains}
+    parname = Symbol("theta[", p, "]")
+    thetas = model.pars.value[var=parname]
+    return vec(thetas)
+end
+
+function getpersonpars(model::RaschModel{ET,DT,PT}, p) where {ET,DT,PT<:StatisticalModel}
+    parname = Symbol("theta[", p, "]")
+    thetas = coef(model.pars)
+    return getindex(thetas, parname)
+end
+
+"""
     irf(model::RaschModel, theta, i, y)
     irf(model::RaschModel, theta, i)
 

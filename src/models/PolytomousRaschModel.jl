@@ -38,6 +38,23 @@ function _get_item_parameter(model::PolytomousRaschModel{ET,PT}, i) where {ET,PT
 end
 
 """
+    getpersonpars(model::PolytomousRaschModel, p)
+
+Fetch the person parameters of `model` for person `p`.
+"""
+function getpersonpars(model::PolytomousRaschModel{ET,PT}, p) where {ET,PT<:Chains}
+    parname = Symbol("theta[", p, "]")
+    thetas = model.pars.value[var=parname]
+    return vec(thetas)
+end
+
+function getpersonpars(model::PolytomousRaschModel{ET,PT}, p) where {ET,PT<:StatisticalModel}
+    parname = Symbol("theta[", p, "]")
+    thetas = coef(model.pars)
+    return getindex(thetas, parname)
+end
+
+"""
     irf(model::PolytomousRaschModel, theta, i, y)
     irf(model::PolytomousRaschModel, theta, i)
 
