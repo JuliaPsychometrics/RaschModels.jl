@@ -1,13 +1,15 @@
 name = "RaschModels"
 uuid = "bb2289d3-8377-491f-981b-126dc716160d"
-authors = ["Philipp Gewessler"]
+authors = ["Philipp Gewessler", "Tobias Alfers"]
 version = "0.1.0"
 
 [deps]
 AbstractItemResponseModels = "0ab3451c-659c-47cd-a7a9-a2d579e209dd"
 Distributions = "31c24e10-a181-5473-b8eb-7969acd0382f"
+LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
 LogExpFunctions = "2ab3a3ac-af41-5b50-aa03-7779005ae688"
 MCMCChains = "c7f686f2-ff18-58e9-bc7b-31028e88f75d"
+NamedArrays = "86f7a689-2022-50b4-a561-43c23ac3c673"
 Optim = "429524aa-4258-5aef-a3af-852621145aeb"
 Reexport = "189a3867-3050-52da-a836-e630ba90ab69"
 ReverseDiff = "37e2e3b7-166d-5795-8a7a-e32c996b4267"
@@ -16,15 +18,14 @@ StatsBase = "2913bbd2-ae8a-5f71-8c99-4fb6c76f3a91"
 Turing = "fce5fe82-541a-59a6-adf8-730c64b5f9a0"
 
 [compat]
-AbstractItemResponseModels = "0.1"
-Optim = "1"
-ReverseDiff = "1"
 Distributions = "0.25"
-StatsAPI = "1"
 MCMCChains = "5"
+Optim = "1"
 Reexport = "1"
-Turing = "0.23, 0.24"
+ReverseDiff = "1"
+StatsAPI = "1"
 StatsBase = "0.33"
+Turing = "0.23, 0.24"
 julia = "1.8"
 
 [extras]
