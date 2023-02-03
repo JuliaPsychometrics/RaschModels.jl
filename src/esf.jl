@@ -105,8 +105,12 @@ end
 """
     esf(ϵ::Vector{<:AbstractFloat}, alg::{<:ESFAlgorithm}; order::Int)
 
-Computation of elementary symmetric functions and their derivatives for dichotomous responses up to a user-specified `order`.
+Computation of elementary symmetric functions (ESFs) and their derivatives for dichotomous responses up to a user-specified `order`.
 
+Arguments:
+- ϵ : vector of exp(-β) 
+- alg : algorithm for computing ESFs and their derivatives
+- order : integer between 0 and 2; 0: ESFs only, 1: ESFs + first derivative, 2: ESFs + first and second derivative
 """
 function esf(ϵ::Vector{T}, alg::ESFA; order::Int = 2) where {T<:AbstractFloat, ESFA<:ESFAlgorithm}
     I = length(ϵ)
