@@ -3,7 +3,7 @@
 
 Conditional maximum likelihood estimation
 
-Note: as of now, only estimation of Rasch model possible. Person parameter estimation via Warm's weighted likelihood estimation will be added in later release.
+Note: As of now, only estimation of Rasch model is supported. Further, no person parameters are provided by CML estimation. Warm's weighted likelihood estimation to allow for person parameter estimates will be added soon.
 
 Arguments: 
 

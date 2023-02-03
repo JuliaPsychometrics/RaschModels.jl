@@ -70,7 +70,7 @@ function gettotals(s::AbstractVector{T}, minvalue::T, maxvalue::T) where {T<:Int
 end
 
 """
-    normalize_sumzero!(::Type{RaschModel}, values::AbstractVector, vcov::AbstractMatrix{T}; I::Int = length(values)) where {T<:AbstractFloat}
+    normalize_sumzero!(values::AbstractVector, vcov::AbstractMatrix{T}; I::Int = length(values)) where {T<:AbstractFloat}
 
 normalize estimated values of a Rasch model from β[1]=0 to ∑β = 0
 """
