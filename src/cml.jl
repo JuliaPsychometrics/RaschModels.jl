@@ -47,6 +47,27 @@ struct CMLResult{
     settings::CML
 end
 
+#####################
+# StatsAPI methods  #
+#####################
+function coeftable(m::CMLResult)
+    # Get columns for coeftable.
+    terms = String.(coefnames(m))
+    estimates = m.values.array
+    stderrors = stderror(m)
+    tstats = estimates ./ stderrors
+
+    CoefTable([estimates, stderrors, tstats], ["estimate", "stderror", "tstat"], terms)
+end
+
+coef(m::CMLResult) = m.values
+coefnames(m::CMLResult) = names(m.values)[1]
+params(m::CMLResult) = coefnames(m)
+informationmatrix(m::CMLResult) = m.vcov
+vcov(m::CMLResult) = informationmatrix(m)
+loglikelihood(m::CMLResult) = m.lp
+
+
 function _fit_by_cml(modeltype::Type{RaschModel}, data::AbstractMatrix{T}, alg::CML, args...; kwargs...) where {T<:Integer}
     P, I = size(data)
     checkcondition(data; P=P, I=I) 
