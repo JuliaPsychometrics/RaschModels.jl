@@ -110,6 +110,9 @@ function _fit(modeltype::Type{PartialCreditModel}, data, alg, args...; kwargs...
 end
 
 function _fit_by_alg(modeltype, data, alg::Turing.InferenceAlgorithm, args...; priors::Prior=Prior(), kwargs...)
+    Turing.setadbackend(:reversediff)
+    Turing.setrdcache(true)
+                
     y, i, p = matrix_to_long(data)
     model = turing_model(modeltype; priors)
     chain = sample(model(y, i, p), alg, args...; kwargs...)
