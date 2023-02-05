@@ -38,13 +38,13 @@ Summation algorithm for calculating elementary symmetric functions and their der
 struct SummationAlgorithm <: ESFAlgorithm end
 
 # elementary symmetric function of order 0
-function _esf0!(alg::SummationAlgorithm, esfstate::ESF, ϵ::Vector{T}) where {T<:AbstractFloat}
+function _esf0!(alg::SummationAlgorithm, esfstate::ESF, ϵ::AbstractVector{T}) where {T<:AbstractFloat}
     (; γ0, R) = esfstate
     _esf!(alg, γ0, ϵ, R)
     return nothing
 end
 
-function _esf!(::SummationAlgorithm, γ0::Vector{T}, ϵ::Vector{T}, R::Int) where {T<:AbstractFloat}
+function _esf!(::SummationAlgorithm, γ0::AbstractVector{T}, ϵ::AbstractVector{T}, R::Int) where {T<:AbstractFloat}
     fill!(γ0, zero(T))
     γ0[1] += one(T)
     γ0[2] += ϵ[1]
@@ -61,7 +61,7 @@ function _esf!(::SummationAlgorithm, γ0::Vector{T}, ϵ::Vector{T}, R::Int) wher
 end
 
 # elementary symmetric function of order 1
-function _esf1!(::SummationAlgorithm, esfstate::ESF, ϵ::Vector{T}) where {T<:AbstractFloat}
+function _esf1!(::SummationAlgorithm, esfstate::ESF, ϵ::AbstractVector{T}) where {T<:AbstractFloat}
     (; γ1, I) = esfstate
 
     γ0_temp = zeros(T, I)
@@ -85,7 +85,7 @@ function _esf1!(::SummationAlgorithm, esfstate::ESF, ϵ::Vector{T}) where {T<:Ab
 end
 
 # elementary symmetric function of order 2
-function _esf2!(::SummationAlgorithm, esfstate::ESF, ϵ::Vector{T}) where {T<:AbstractFloat}
+function _esf2!(::SummationAlgorithm, esfstate::ESF, ϵ::AbstractVector{T}) where {T<:AbstractFloat}
     (; γ1, γ2, I, R) = esfstate
 
     ϵ_times_ϵ = ϵ .* ϵ'
@@ -122,7 +122,7 @@ Arguments:
 - alg : algorithm for computing ESFs and their derivatives
 - order : integer between 0 and 2; 0: ESFs only, 1: ESFs + first derivative, 2: ESFs + first and second derivative
 """
-function esf(ϵ::Vector{T}, alg::ESFA; order::Int = 2, I = length(ϵ), R = I+1) where {T<:AbstractFloat, ESFA<:ESFAlgorithm}
+function esf(ϵ::AbstractVector{T}, alg::ESFA; order::Int = 2, I = length(ϵ), R = I+1) where {T<:AbstractFloat, ESFA<:ESFAlgorithm}
     # checks
     (order ≤ 2 || order ≥ 0) || throw(ArgumentError("Invalid order value $(order)"))
     I > 1 || throw(DomainError("item length must be over 1"))
