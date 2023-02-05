@@ -29,7 +29,7 @@ export PartialCreditModel
 export RatingScaleModel
 export RaschModel
 
-export CML, ESF, esf, SummationAlgorithm
+export CML, SummationAlgorithm
 
 include("utils.jl")
 include("types.jl")
