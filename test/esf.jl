@@ -23,7 +23,7 @@
             0.0 1.1597 2.6971 5.3337 0.5361
         ]
         @testset "Summation Algorithm" begin
-            esf_sum = esf(ϵ, SummationAlgorithm())
+            esf_sum = RaschModels.esf(ϵ, SummationAlgorithm())
             @test esf_sum.γ0 ≈ γ0 atol=.001
             @test esf_sum.γ1 ≈ γ1 atol=.001 
             @test size(esf_sum.γ2) == (6, 5, 5)

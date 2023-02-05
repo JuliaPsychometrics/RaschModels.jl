@@ -145,12 +145,12 @@ end
 function optfuns(
     ::Type{RaschModel}, 
     data::AbstractMatrix{<:Integer}, 
-    esf::ESF, 
+    esfstate::ESF, 
     esf_alg::ESFA; 
     I::Int = size(data, 2),
     R::Int = I+1
 ) where {ESFA<:ESFAlgorithm}
-    (;γ0, γ1, γ2) = esf
+    (;γ0, γ1, γ2) = esfstate
 
     rs = vec(sum(data, dims = 2))
     rf = gettotals(rs, 0, I)[2:end]
@@ -162,7 +162,7 @@ function optfuns(
         if β != last_β
             copyto!(last_β, β)
             @. ϵ = exp(-β)
-            _esf!(esf_alg, ϵ, γ0, R)
+            _esf0!(esf_alg, esfstate, ϵ)
         end
         return nothing
     end
@@ -178,7 +178,7 @@ function optfuns(
 
     g! = function(G, β)
         calculate_common!(β, last_β)
-        _esf!(esf_alg, ϵ, γ0, γ1, R)
+        _esf1!(esf_alg, esfstate, ϵ)
         @. γ1 = exp(log(γ1)' - β)'
         rs_ind = rs .!= 0
         @views G_temp = (.-data[rs_ind, :] .+ γ1[rs[rs_ind], :] ./ 
@@ -189,7 +189,7 @@ function optfuns(
     end
 
     h! = function(H)
-        _esf!(esf_alg, ϵ, γ0, γ1, γ2, R)
+        _esf2!(esf_alg, esfstate, ϵ)
         @views g0 = γ0[2:R]
         @views g1 = γ1[1:I, 2:I]
         @views g2 = γ2[1:I, 2:I, 2:I]
@@ -211,7 +211,7 @@ function optfuns(::Type{RaschModel},
     cs::Vector{Int}, 
     rs::Vector{Int}, 
     rp::ResponsePatterns, 
-    esf_split::Dict{Int, <:ESF}, 
+    esfstate_split::Dict{Int, <:ESF}, 
     esf_alg::ESFA;
     I::Int = size(data, 2)
 ) where {ESFA<:ESFAlgorithm}
@@ -240,7 +240,7 @@ function optfuns(::Type{RaschModel},
 
             for (i, v) in patterns
                 ϵ_split[i] .= ϵ[v]
-                _esf!(esf_alg, ϵ_split[i], esf_split[i].γ0, I_split[i]+1)
+                _esf0!(esf_alg, esfstate_split[i], ϵ_split[i])
             end
         end
         return nothing
@@ -252,7 +252,7 @@ function optfuns(::Type{RaschModel},
 
         for (i, v) in I_split
             @views cll += -cs_split[i]'log.(ϵ_split[i]) + 
-                rf_split[i]'log.(esf_split[i].γ0[2:(v+1)])
+                rf_split[i]'log.(esfstate_split[i].γ0[2:(v+1)])
         end
 
         if !isfinite(cll)
@@ -267,15 +267,15 @@ function optfuns(::Type{RaschModel},
 
         for (i, v) in patterns
             idx_i = pattern_idx .== i
-            esf_i = esf_split[i]
+            esfstate_i = esfstate_split[i]
             rs_i = rs_split[i]
             rs_ind = rs_i .!= 0
 
-            _esf!(esf_alg, ϵ_split[i], esf_i.γ0, esf_i.γ1, I_split[i]+1)
-            @. esf_i.γ1 = exp(log(esf_i.γ1)' - β[v])'
+            _esf1!(esf_alg, esfstate_i, ϵ_split[i])
+            @. esfstate_i.γ1 = exp(log(esfstate_i.γ1)' - β[v])'
 
             @views G_i = .-data[idx_i, v][rs_ind, :] .+ 
-                esf_i.γ1[rs_i[rs_ind], :] ./ esf_i.γ0[rs_i[rs_ind] .+ 1]
+                esfstate_i.γ1[rs_i[rs_ind], :] ./ esfstate_i.γ0[rs_i[rs_ind] .+ 1]
             G_temp[v] .-= vec(sum(G_i, dims = 1))
         end
 
@@ -288,10 +288,10 @@ function optfuns(::Type{RaschModel},
         H_temp = fill!(H_temp, zero(Float64))
 
         for (i, v) in patterns
-            esf_i = esf_split[i]
+            esfstate_i = esfstate_split[i]
 
-            I_i = I_split[i]
-            R_i = I_i + 1
+            I_i = esfstate_i.I
+            R_i = esfstate_i.R
             rf_i = rf_split[i]
 
             v_est = v[2:end]
@@ -300,11 +300,11 @@ function optfuns(::Type{RaschModel},
 
             @views H_temp_i = H_temp[v_est, v_est]
 
-            _esf!(esf_alg, ϵ_split[i], esf_i.γ0, esf_i.γ1, esf_i.γ2, R_i)
+            _esf2!(esf_alg, esfstate_i, ϵ_split[i])
             
-            @views g0 = esf_i.γ0[2:R_i]
-            @views g1 = esf_i.γ1[1:I_i, iter_est]
-            @views g2 = esf_i.γ2[1:I_i, iter_est, iter_est]
+            @views g0 = esfstate_i.γ0[2:R_i]
+            @views g1 = esfstate_i.γ1[1:I_i, iter_est]
+            @views g2 = esfstate_i.γ2[1:I_i, iter_est, iter_est]
             g1divg0 = g1 ./ g0
 
             for i in 1:sum_v_est
