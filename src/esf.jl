@@ -40,21 +40,23 @@ struct SummationAlgorithm <: ESFAlgorithm end
 # elementary symmetric function of order 0
 function _esf0!(alg::SummationAlgorithm, esfstate::ESF, ϵ::AbstractVector{T}) where {T<:AbstractFloat}
     (; γ0, R) = esfstate
-    _esf!(alg, γ0, ϵ, R)
+    γtemp = copy(γ0)
+
+    _esf!(alg, γ0, γtemp, ϵ, R)
     return nothing
 end
 
-function _esf!(::SummationAlgorithm, γ0::AbstractVector{T}, ϵ::AbstractVector{T}, R::Int) where {T<:AbstractFloat}
+function _esf!(::SummationAlgorithm, γ0::AbstractVector{T}, γtemp::AbstractVector{T}, ϵ::AbstractVector{T}, R::Int) where {T<:AbstractFloat}
     fill!(γ0, zero(T))
     γ0[1] += one(T)
     γ0[2] += ϵ[1]
-
-    γ_temp = copy(γ0)
+    γtemp .= γ0
+ 
     for i in 3:R
         for j in 3:i
-            γ_temp[j] = (ϵ[i-1] * γ0[j-1]) + γ0[j]
+            γtemp[j] = (ϵ[i-1] * γ0[j-1]) + γ0[j]
         end
-        γ0[3:i] = view(γ_temp, 3:i)
+        γ0[3:i] = view(γtemp, 3:i)
         γ0[2] = ϵ[i-1] + γ0[2]
     end
     return nothing
@@ -64,12 +66,12 @@ end
 function _esf1!(::SummationAlgorithm, esfstate::ESF, ϵ::AbstractVector{T}) where {T<:AbstractFloat}
     (; γ1, I) = esfstate
 
-    γ0_temp = zeros(T, I)
+    γ0_i = zeros(T, I)
+    γtemp_i = copy(γ0_i)
 
     fill!(γ1, zero(T))
     inv_ind = zeros(T, I-1)
     for i in 1:I
-        fill!(γ0_temp, zero(T))
         # looks ugly, but was the fastest way (less allocations)
         if i == 1
             inv_ind = 2:I
@@ -78,8 +80,8 @@ function _esf1!(::SummationAlgorithm, esfstate::ESF, ϵ::AbstractVector{T}) wher
         else
             inv_ind = cat(1:(i-1), (i+1):I, dims=1)
         end
-        _esf!(SummationAlgorithm(), γ0_temp, ϵ[inv_ind], I)
-        γ1[1:I, i] = γ0_temp
+        _esf!(SummationAlgorithm(), γ0_i, γtemp_i, ϵ[inv_ind], I)
+        γ1[1:I, i] = γ0_i
     end
     return nothing
 end
@@ -89,15 +91,15 @@ function _esf2!(::SummationAlgorithm, esfstate::ESF, ϵ::AbstractVector{T}) wher
     (; γ1, γ2, I, R) = esfstate
 
     ϵ_times_ϵ = ϵ .* ϵ'
-    γ_temp = zeros(T, I-1)
+    γ0_ij = zeros(T, I-1)
+    γtemp_ij = copy(γ0_ij)
 
     fill!(γ2, zero(T))
     for i in 1:I-1
         for j in (i+1):I
-            fill!(γ_temp, zero(T))
             inv_ind = filter(n -> ((n != i) && (n != j)), 1:I)
-            _esf!(SummationAlgorithm(), γ_temp, ϵ[inv_ind], I-1)
-            γ2[2:I, j, i] = γ_temp
+            _esf!(SummationAlgorithm(), γ0_ij, γtemp_ij, ϵ[inv_ind], I-1)
+            γ2[2:I, j, i] = γ0_ij
             γ2[:, i, j] = γ2[:, j, i]
         end
     end
