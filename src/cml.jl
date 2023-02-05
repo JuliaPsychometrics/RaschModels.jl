@@ -9,12 +9,12 @@ Arguments:
 
 - esf_alg::{<:ESFAlgorithm} : The algorithm for calculating elementary symmetric functions, default = SummationAlgorithm()
 - start : Vector of starting values for β (item difficulties); default = nothing
-- sum0::Bool : Sum-zero normalization of estimates and vcov, default = true
+- normalize::Bool : Sum-zero normalization of estimates and vcov, default = true
 """
 Base.@kwdef struct CML{ESFA<:ESFAlgorithm}
     esf_alg::ESFA = SummationAlgorithm()
     start::UN{Vector{AbstractFloat}} = nothing
-    sum0::Bool = true
+    normalize::Bool = true
 end
 
 """
@@ -97,7 +97,7 @@ function _fit_by_cml(modeltype::Type{RaschModel}, data::AbstractMatrix{T}, alg::
         Symbol.("beta[" .* string.(1:I) .* "]")
     )
     ## sum-zero normalization (∑β = 0), else β[1] = 0
-    alg.sum0 && normalize_sumzero!(values, vcov; I = I)   
+    alg.normalize && normalize_sumzero!(values, vcov; I = I)   
 
     return CMLResult(modeltype, values, estimate, -estimate.minimum, I-1, Γ, vcov, alg)
 end
@@ -136,7 +136,7 @@ function _fit_by_cml(modeltype::Type{RaschModel}, data::MatrixWithMissings{T}, a
     # handle variables for output
     values = NamedArrays.NamedArray(estimate.minimizer, Symbol.("beta[" .* string.(1:I) .* "]"))
     ## sum-zero normalization (∑β = 0), else β[1] = 0
-    alg.sum0 && normalize_sumzero!(values, vcov; I = I)
+    alg.normalize && normalize_sumzero!(values, vcov; I = I)
 
     return CMLResult(modeltype, values, estimate, -estimate.minimum, I-1, esf_split, vcov, alg)
 end
