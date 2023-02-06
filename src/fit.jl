@@ -25,6 +25,9 @@ If your model features e.g. three categories, they are coded as `1`, `2` and `3`
 ### `alg`
 The estimation algorithm.
 
+The following algorithm is still in development phase, by now only the `RaschModel` is supported. 
+- `CML`: Conditional maximum likelihood
+
 For (bayesian) sampling based estimation all `Turing.InferenceAlgorithm` types are supported.
 The following algorithms are reexported from this package:
 
@@ -38,6 +41,14 @@ Bayesian point estimation is supported by
 - `MLE`: Maximum Likelihood (Posterior mean)
 
 ## Examples
+
+### Conditional maximum likelihood estimation
+
+```julia
+X = rand(0:1, 100, 10)
+rasch_fit = fit(RaschModel, X, CML())
+```
+
 ### Bayesian estimation
 Fitting a simple Rasch model with the No-U-Turn-Sampler.
 Note that estimation with `Turing.InterenceAlgorithm` uses the
@@ -125,3 +136,15 @@ function _fit_by_alg(modeltype, data, alg::Union{Turing.MAP,Turing.MLE}, args...
     estimate = optimize(model(y, i, p), alg, args...; kwargs...)
     return estimate, PointEstimate
 end
+
+function _fit_by_alg(modeltype, data, alg::CML, args...; kwargs...)
+    estimate = _fit_by_cml(modeltype, data, alg, args...; kwargs...)
+    return estimate, PointEstimate
+end
+
+# for CML estimation a separate logic is necessary to follow if missing values in dataset 
+function _fit_by_alg(modeltype, data::MatrixWithMissings{T}, alg::CML, args...; kwargs...) where {T}
+    estimate = _fit_by_cml(modeltype, data, alg, args...; kwargs...)
+    return estimate, PointEstimate   
+end
+
