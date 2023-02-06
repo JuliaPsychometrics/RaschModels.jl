@@ -70,15 +70,14 @@ function _esf1!(::SummationAlgorithm, esfstate::ESF, ϵ::AbstractVector{T}) wher
     γtemp_i = copy(γ0_i)
 
     fill!(γ1, zero(T))
-    inv_ind = zeros(T, I-1)
+    inv_ind = zeros(Int, I-1)
     for i in 1:I
-        # looks ugly, but was the fastest way (less allocations)
         if i == 1
-            inv_ind = 2:I
+            inv_ind .= 2:I
         elseif i == I
-            inv_ind = 1:(I-1)
+            inv_ind .= 1:(I-1)
         else
-            inv_ind = cat(1:(i-1), (i+1):I, dims=1)
+            inv_ind .= cat(1:(i-1), (i+1):I, dims=1)
         end
         _esf!(SummationAlgorithm(), γ0_i, γtemp_i, ϵ[inv_ind], I)
         γ1[1:I, i] = γ0_i
