@@ -162,15 +162,3 @@ function _fit_by_alg(modeltype, data, alg::CML, args...; kwargs...)
     estimate = _fit_by_cml(modeltype, data, alg, args...; kwargs...)
     return estimate, PointEstimate
 end
-
-# for CML estimation a separate logic is necessary to follow if missing values in dataset
-function _fit_by_alg(
-    modeltype,
-    data::MatrixWithMissings{T},
-    alg::CML,
-    args...;
-    kwargs...,
-) where {T}
-    estimate = _fit_by_cml(modeltype, data, alg, args...; kwargs...)
-    return estimate, PointEstimate
-end
