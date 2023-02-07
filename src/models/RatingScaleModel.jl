@@ -11,13 +11,13 @@ struct RatingScaleModel{ET<:EstimationType,DT<:AbstractMatrix,PT} <:
     parnames_tau::Vector{Symbol}
 end
 
-function _get_item_thresholds(
-    model::RatingScaleModel{ET,DT,PT},
-    i,
-)::Matrix{Float64} where {ET,DT,PT<:Chains}
+function _get_item_thresholds(model::RatingScaleModel{ET,DT,PT}, i) where {ET,DT,PT<:Chains}
     threshold_names = model.parnames_tau
-    thresholds = Array(model.pars[threshold_names])
-    return thresholds
+    thresholds = view(model.pars.value, var = threshold_names)
+    n_iter, n_pars, n_chains = size(thresholds)
+    thresholds_permuted = permutedims(thresholds, (1, 3, 2))
+    threshold_mat = Matrix(reshape(thresholds_permuted, n_iter * n_chains, n_pars))
+    return threshold_mat
 end
 
 function _get_item_thresholds(
