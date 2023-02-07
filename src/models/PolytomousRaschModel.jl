@@ -25,9 +25,9 @@ end
 
 # MCMCChains
 function _get_item_parameter(model::PolytomousRaschModel{ET,PT}, i) where {ET,PT<:Chains}
-    parname = Symbol("beta[", i, "]")
-    betas = model.pars.value[var = parname]
-    return vec(betas)
+    parname = model.parnames_beta[i]
+    betas = vec(view(model.pars.value, var = parname))
+    return betas
 end
 
 # StatisticalModel
@@ -35,7 +35,7 @@ function _get_item_parameter(
     model::PolytomousRaschModel{ET,PT},
     i,
 ) where {ET,PT<:StatisticalModel}
-    parname = Symbol("beta[", i, "]")
+    parname = model.parnames_beta[i]
     pars = coef(model.pars)
     return getindex(pars, parname)
 end
@@ -75,10 +75,12 @@ function irf(model::PolytomousRaschModel{SamplingEstimate}, theta, i)
     n_samples, n_thresholds = size(thresholds)
 
     probs = similar(thresholds, n_samples, n_thresholds + 1)
+    extended = zeros(Float64, n_thresholds + 1)
 
-    for i in 1:n_samples
-        threshold_difficulty = view(beta, i) .+ view(thresholds, i, :)
-        probs[i, :] = _irf(PolytomousRaschModel, theta, threshold_difficulty)
+    eta = @. theta - (beta + thresholds)
+
+    for (i, x) in enumerate(eachrow(eta))
+        probs[i, :] = _irf(PolytomousRaschModel, extended, x)
     end
 
     return probs
@@ -92,8 +94,9 @@ end
 
 function irf(model::PolytomousRaschModel{PointEstimate}, theta, i)
     beta, thresholds = getitempars(model, i)
-    threshold_difficulties = beta .+ thresholds
-    probs = _irf(PolytomousRaschModel, theta, threshold_difficulties)
+    extended = zeros(Float64, length(thresholds) + 1)
+    eta = @. theta - (beta + thresholds)
+    probs = _irf(PolytomousRaschModel, extended, eta)
     return probs
 end
 
@@ -103,8 +106,9 @@ function irf(model::PolytomousRaschModel{PointEstimate}, theta, i, y)
     return probs[Int(y)]
 end
 
-function _irf(::Type{PolytomousRaschModel}, theta, betas)
-    extended = vcat(zero(eltype(betas)), theta .- betas)
+function _irf(::Type{PolytomousRaschModel}, extended, eta)
+    extended .= 0.0
+    extended[2:end] = eta
     cumsum!(extended, extended)
     softmax!(extended, extended)
     return extended
@@ -154,16 +158,16 @@ function _iif(
     model::PolytomousRaschModel{SamplingEstimate},
     theta,
     i;
-    scoring_function = identity,
-)
+    scoring_function::F = identity,
+) where {F}
     category_probs = irf(model, theta, i)
     score = expected_score(model, theta, i; scoring_function)
 
     info = similar(score)
 
     for i in eachindex(info)
-        info[i] =
-            _iif(PolytomousRaschModel, category_probs[i, :], score[i]; scoring_function)
+        probs = vec(view(category_probs, i, :))
+        info[i] = _iif(PolytomousRaschModel, probs, score[i]; scoring_function)
     end
 
     return info
@@ -173,15 +177,20 @@ function _iif(
     model::PolytomousRaschModel{PointEstimate},
     theta,
     i;
-    scoring_function = identity,
-)
+    scoring_function::F = identity,
+) where {F}
     category_probs = irf(model, theta, i)
     score = expected_score(model, theta, i; scoring_function)
     info = _iif(PolytomousRaschModel, category_probs, score; scoring_function)
     return info
 end
 
-function _iif(::Type{PolytomousRaschModel}, probs, score; scoring_function = identity)
+function _iif(
+    ::Type{PolytomousRaschModel},
+    probs,
+    score;
+    scoring_function::F = identity,
+) where {F}
     info = zero(Float64)
     for (category, prob) in enumerate(probs)
         info += (scoring_function(category) - score)^2 * prob
@@ -206,16 +215,17 @@ function expected_score(
     model::PolytomousRaschModel{SamplingEstimate},
     theta,
     is;
-    scoring_function = identity,
-)
+    scoring_function::F = identity,
+) where {F}
     n_samples = size(model.pars, 1)
     score = zeros(Float64, n_samples)
 
     for i in is
-        category_probs = irf(model, theta, i)
-        categories = 1:size(category_probs, 2)
-        category_scores = category_probs * scoring_function.(categories)
-        score += category_scores
+        probs = irf(model, theta, i)
+
+        for (category, prob) in enumerate(eachcol(probs))
+            @. score += prob * scoring_function(category)
+        end
     end
 
     return score
@@ -225,21 +235,26 @@ function expected_score(
     model::PolytomousRaschModel{PointEstimate},
     theta,
     is;
-    scoring_function = identity,
-)
+    scoring_function::F = identity,
+) where {F}
     score = zero(Float64)
 
     for i in is
-        category_probs = irf(model, theta, i)
-        categories = 1:length(category_probs)
-        category_scores = category_probs .* scoring_function.(categories)
-        score += sum(category_scores)
+        probs = irf(model, theta, i)
+
+        for (category, prob) in enumerate(probs)
+            score += prob * scoring_function(category)
+        end
     end
 
     return score
 end
 
-function expected_score(model::PolytomousRaschModel, theta; scoring_function = identity)
+function expected_score(
+    model::PolytomousRaschModel,
+    theta;
+    scoring_function::F = identity,
+) where {F}
     items = 1:size(model.data, 2)
     score = expected_score(model, theta, items; scoring_function)
     return score

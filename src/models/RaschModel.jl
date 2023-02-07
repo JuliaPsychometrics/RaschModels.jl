@@ -1,7 +1,7 @@
 mutable struct RaschModel{ET<:EstimationType,DT<:AbstractMatrix,PT} <: AbstractRaschModel
     data::DT
     pars::PT
-    parnames::Vector{Symbol}
+    parnames_beta::Vector{Symbol}
 end
 
 response_type(::Type{<:RaschModel}) = AbstractItemResponseModels.Dichotomous
@@ -13,13 +13,13 @@ estimation_type(::Type{<:RaschModel{ET,DT,PT}}) where {ET,DT,PT} = ET
 Fetch the item parameters of `model` for item `i`.
 """
 function getitempars(model::RaschModel{ET,DT,PT}, i) where {ET,DT,PT<:Chains}
-    parname = Symbol("beta[", i, "]")
-    betas = model.pars.value[var = parname]
-    return vec(betas)
+    parname = model.parnames_beta[i]
+    betas = vec(view(model.pars.value, var = parname))
+    return betas
 end
 
 function getitempars(model::RaschModel{ET,DT,PT}, i) where {ET,DT,PT<:StatisticalModel}
-    parname = Symbol("beta[", i, "]")
+    parname = model.parnames_beta[i]
     betas = coef(model.pars)
     return getindex(betas, parname)
 end
@@ -51,15 +51,39 @@ value `theta`.
 If the response value `y` is omitted, the item response probability for a correct response
 `y = 1` is returned.
 """
-function irf(model::RaschModel, theta, i, y = 1)
+function irf(model::RaschModel{SamplingEstimate}, theta, i, y = 1)
+    n_iter = length(getitempars(model, i))
+    probs = zeros(Float64, n_iter)
+    add_irf!(model, probs, theta, i, y)
+    return probs
+end
+
+function irf(model::RaschModel{PointEstimate}, theta, i, y = 1)
     checkresponsetype(response_type(model), y)
     beta = getitempars(model, i)
-    return _irf.(RaschModel, theta, beta, y)
+    return _irf(RaschModel, theta, beta, y)
+end
+
+function add_irf!(
+    model::RaschModel{SamplingEstimate},
+    probs,
+    theta,
+    i,
+    y;
+    scoring_function::F = identity,
+) where {F}
+    checkresponsetype(response_type(model), y)
+    beta = getitempars(model, i)
+
+    for j in eachindex(beta)
+        probs[j] += _irf(RaschModel, theta, beta[j], y) * scoring_function(y)
+    end
+
+    return nothing
 end
 
 function _irf(::Type{RaschModel}, theta, beta, y)
-    exp_linpred = exp(theta - beta)
-    prob = exp_linpred / (1 + exp_linpred)
+    prob = logistic(theta - beta)
     return ifelse(y == 1, prob, 1 - prob)
 end
 
@@ -73,15 +97,46 @@ ability value `theta`.
 If the response value `y` is omitted, the item information for a correct response `y = 1` is
 returned.
 """
-function iif(model::RaschModel, theta, i, y = 1)
-    checkresponsetype(response_type(model), y)
-    beta = getitempars(model, i)
-    return _iif.(RaschModel, theta, beta, y)
+function iif(model::RaschModel{SamplingEstimate}, theta, i, y = 1)
+    n_iter = length(getitempars(model, i))
+    info = zeros(Float64, n_iter)
+    add_iif!(model, info, theta, i, y)
+    return info
 end
 
-function _iif(::Type{RaschModel}, theta, beta, y)
-    prob = _irf(RaschModel, theta, beta, y)
-    info = prob * (1 - prob)
+function iif(model::RaschModel{PointEstimate}, theta, i, y = 1)
+    checkresponsetype(response_type(model), y)
+    beta = getitempars(model, i)
+    return _iif(RaschModel, theta, beta)
+end
+
+function add_iif!(
+    model::RaschModel{SamplingEstimate},
+    info,
+    theta,
+    i,
+    y;
+    scoring_function::F = identity,
+) where {F}
+    checkresponsetype(response_type(model), y)
+    beta = getitempars(model, i)
+
+    for j in eachindex(beta)
+        info[j] += _iif(RaschModel, theta, beta[j]; scoring_function)
+    end
+
+    return nothing
+end
+
+function _iif(::Type{RaschModel}, theta, beta; scoring_function::F = identity) where {F}
+    expected = _irf(RaschModel, theta, beta, 1) * scoring_function(1)
+    info = zero(Float64)
+
+    for y in 0:1
+        prob = _irf(RaschModel, theta, beta, y)
+        info += (scoring_function(y) - expected)^2 * prob
+    end
+
     return info
 end
 
@@ -99,13 +154,15 @@ function expected_score(
     model::RaschModel{SamplingEstimate},
     theta,
     is;
-    scoring_function = identity,
-)
+    scoring_function::F = identity,
+) where {F}
     niter = size(model.pars, 1)
     score = zeros(Float64, niter)
+
     for i in is
-        score .+= scoring_function.(irf(model, theta, i, 1))
+        add_irf!(model, score, theta, i, 1; scoring_function)
     end
+
     return score
 end
 
@@ -113,16 +170,16 @@ function expected_score(
     model::RaschModel{PointEstimate},
     theta,
     is;
-    scoring_function = identity,
-)
+    scoring_function::F = identity,
+) where {F}
     score = zero(Float64)
     for i in is
-        score += scoring_function(irf(model, theta, i, 1))
+        score += irf(model, theta, i, 1) * scoring_function(1)
     end
     return score
 end
 
-function expected_score(model::RaschModel, theta; scoring_function = identity)
+function expected_score(model::RaschModel, theta; scoring_function::F = identity) where {F}
     items = 1:size(model.data, 2)
     score = expected_score(model, theta, items; scoring_function)
     return score
@@ -142,13 +199,15 @@ function information(
     model::RaschModel{SamplingEstimate},
     theta,
     is;
-    scoring_function = identity,
-)
+    scoring_function::F = identity,
+) where {F}
     niter = size(model.pars, 1)
     info = zeros(Float64, niter)
+
     for i in is
-        info .+= scoring_function.(iif(model, theta, i, 1))
+        add_iif!(model, info, theta, i, 1; scoring_function)
     end
+
     return info
 end
 
@@ -156,16 +215,17 @@ function information(
     model::RaschModel{PointEstimate},
     theta,
     is;
-    scoring_function = identity,
-)
+    scoring_function::F = identity,
+) where {F}
     info = zero(Float64)
     for i in is
-        info += scoring_function(iif(model, theta, i, 1))
+        beta = getitempars(model, i)
+        info += _iif(RaschModel, theta, beta; scoring_function)
     end
     return info
 end
 
-function information(model::RaschModel, theta; scoring_function = identity)
+function information(model::RaschModel, theta; scoring_function::F = identity) where {F}
     items = 1:size(model.data, 2)
     info = information(model, theta, items; scoring_function)
     return info
