@@ -83,8 +83,7 @@ function irf(model::RaschModel{PointEstimate}, theta, i, y = 1)
 end
 
 function _irf(::Type{RaschModel}, theta, beta, y)
-    exp_linpred = exp(theta - beta)
-    prob = exp_linpred / (1 + exp_linpred)
+    prob = logistic(theta - beta)
     return ifelse(y == 1, prob, 1 - prob)
 end
 
