@@ -1,5 +1,5 @@
 # convenience types and methods for handling missing data
-MatrixWithMissings{T} = AbstractMatrix{Union{T, Missing}}
+MatrixWithMissings{T} = AbstractMatrix{Union{T,Missing}}
 isresponse(x) = !ismissing(x)
 
 """
@@ -8,15 +8,19 @@ isresponse(x) = !ismissing(x)
 stores for a given dataset the following information:
     - `patterns`: dict of boolean response patterns (false = missing response)
     - `pattern_idx`: a vector mapping each person to one response pattern in `patterns`
-    - `n`: number of patterns. 
+    - `n`: number of patterns.
 """
 struct ResponsePatterns
-    patterns::Dict{Int, Vector{Bool}}
+    patterns::Dict{Int,Vector{Bool}}
     pattern_idx::Vector{Int}
     n::Int
 end
 
-function ResponsePatterns(data::AbstractMatrix; response_ind::AbstractMatrix{T} = isresponse.(data), P = size(data, 1)) where {T<:Integer}
+function ResponsePatterns(
+    data::AbstractMatrix;
+    response_ind::AbstractMatrix{T} = isresponse.(data),
+    P = size(data, 1),
+) where {T<:Integer}
     unique_patterns::Vector{Vector{Bool}} = unique(eachrow(response_ind))
     pattern_idx = zeros(Int64, P)
 
@@ -35,16 +39,24 @@ end
 """
     checkpatterns(data::AbstractMatrix; response_ind{<:Integer} = isresponse(data))
 
-relevant check for conditional maximum likelihood estimation if response matrix `data` contains 
-    - items with only missing responses 
+relevant check for conditional maximum likelihood estimation if response matrix `data` contains
+    - items with only missing responses
     - subjects with less than two responses
 """
-function checkpatterns(data::AbstractMatrix; response_ind::AbstractMatrix{T} = isresponse.(data)) where {T<:Integer}
+function checkpatterns(
+    data::AbstractMatrix;
+    response_ind::AbstractMatrix{T} = isresponse.(data),
+) where {T<:Integer}
     n_responses_col = sum(response_ind, dims = 1)
     n_responses_row = sum(response_ind, dims = 2)
 
-    any(n -> n == 0, n_responses_col) && throw(DomainError("Items with only missing responses are not permitted."))
-    any(n -> n < 2, n_responses_row) && throw(DomainError("Only subjects with at least two non-missing responses allowed."))
+    if any(n -> n == 0, n_responses_col)
+        throw(DomainError("Items with only missing responses are not permitted."))
+    end
+
+    if any(n -> n < 2, n_responses_row)
+        throw(DomainError("Only subjects with at least two non-missing responses allowed."))
+    end
 
     return nothing
 end
