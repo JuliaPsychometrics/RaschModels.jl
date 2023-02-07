@@ -1,7 +1,7 @@
 mutable struct RaschModel{ET<:EstimationType,DT<:AbstractMatrix,PT} <: AbstractRaschModel
     data::DT
     pars::PT
-    parnames::Vector{Symbol}
+    parnames_beta::Vector{Symbol}
 end
 
 response_type(::Type{<:RaschModel}) = AbstractItemResponseModels.Dichotomous
@@ -13,13 +13,13 @@ estimation_type(::Type{<:RaschModel{ET,DT,PT}}) where {ET,DT,PT} = ET
 Fetch the item parameters of `model` for item `i`.
 """
 function getitempars(model::RaschModel{ET,DT,PT}, i) where {ET,DT,PT<:Chains}
-    parname = model.parnames[i]
+    parname = model.parnames_beta[i]
     betas = vec(view(model.pars.value, var = parname))
     return betas
 end
 
 function getitempars(model::RaschModel{ET,DT,PT}, i) where {ET,DT,PT<:StatisticalModel}
-    parname = model.parnames[i]
+    parname = model.parnames_beta[i]
     betas = coef(model.pars)
     return getindex(betas, parname)
 end
@@ -58,6 +58,12 @@ function irf(model::RaschModel{SamplingEstimate}, theta, i, y = 1)
     return probs
 end
 
+function irf(model::RaschModel{PointEstimate}, theta, i, y = 1)
+    checkresponsetype(response_type(model), y)
+    beta = getitempars(model, i)
+    return _irf(RaschModel, theta, beta, y)
+end
+
 function add_irf!(
     model::RaschModel{SamplingEstimate},
     probs,
@@ -74,12 +80,6 @@ function add_irf!(
     end
 
     return nothing
-end
-
-function irf(model::RaschModel{PointEstimate}, theta, i, y = 1)
-    checkresponsetype(response_type(model), y)
-    beta = getitempars(model, i)
-    return _irf(RaschModel, theta, beta, y)
 end
 
 function _irf(::Type{RaschModel}, theta, beta, y)
@@ -104,6 +104,12 @@ function iif(model::RaschModel{SamplingEstimate}, theta, i, y = 1)
     return info
 end
 
+function iif(model::RaschModel{PointEstimate}, theta, i, y = 1)
+    checkresponsetype(response_type(model), y)
+    beta = getitempars(model, i)
+    return _iif(RaschModel, theta, beta)
+end
+
 function add_iif!(
     model::RaschModel{SamplingEstimate},
     info,
@@ -120,12 +126,6 @@ function add_iif!(
     end
 
     return nothing
-end
-
-function iif(model::RaschModel{PointEstimate}, theta, i, y = 1)
-    checkresponsetype(response_type(model), y)
-    beta = getitempars(model, i)
-    return _iif(RaschModel, theta, beta)
 end
 
 function _iif(::Type{RaschModel}, theta, beta; scoring_function::F = identity) where {F}
