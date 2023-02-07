@@ -1,4 +1,4 @@
-
+UN{T} = Union{T,Nothing}
 
 """
     matrix_to_long(m::AbstractMatrix; dropmissing=true)
@@ -8,7 +8,7 @@ Returns 3 vectors of equal length corresponding to the responses, item ids and p
 
 By default missing values are treated as missing at random and dropped from the response vectors.
 """
-function matrix_to_long(m::AbstractMatrix; dropmissing=true)
+function matrix_to_long(m::AbstractMatrix; dropmissing = true)
     N = dropmissing ? sum(!ismissing, m) : prod(size(m))
 
     response_vec = construct_response_vector(m, N; dropmissing)
@@ -30,14 +30,20 @@ function matrix_to_long(m::AbstractMatrix; dropmissing=true)
     return response_vec, item_vec, person_vec
 end
 
-construct_response_vector(m::AbstractMatrix{T}, N; dropmissing) where {T} = Vector{T}(undef, N)
-function construct_response_vector(m::AbstractMatrix{Union{Missing,T}}, N; dropmissing) where {T}
+function construct_response_vector(m::AbstractMatrix{T}, N; dropmissing) where {T}
+    return Vector{T}(undef, N)
+end
+function construct_response_vector(
+    m::AbstractMatrix{Union{Missing,T}},
+    N;
+    dropmissing,
+) where {T}
     type = dropmissing ? T : Union{Missing,T}
     return Vector{type}(undef, N)
 end
 
 """
-    betnames(n)
+    betanames(n)
 
 Construct a vector of parameter names for item difficulties/locations.
 """
@@ -50,7 +56,38 @@ end
 
 Construct a vector of parameter names for item thresholds.
 """
-function taunames(n; item=nothing)
+function taunames(n; item = nothing)
     item_str = isnothing(item) ? "" : string("[", item, "]")
     return [Symbol("tau", item_str, "[", i, "]") for i in 1:n]
+end
+
+"""
+    gettotals(s::AbstractVector{T}, minvalue::T, maxvalue::T) where {T<:Int}
+
+Helper function to obtain totals for a marginal score vector `s` (row or column scores) from `minvalue` to `maxvalue`.
+"""
+function gettotals(s::AbstractVector{T}, minvalue::T, maxvalue::T) where {T<:Int}
+    totals = zeros(T, maxvalue + 1)
+    for i in s
+        (i < minvalue || i > maxvalue) && continue
+        totals[i+1] += 1
+    end
+    return totals[(minvalue+1):end]
+end
+
+"""
+    normalize_sumzero!(values::AbstractVector, vcov::AbstractMatrix{T}; I::Int = length(values)) where {T<:AbstractFloat}
+
+normalize estimated values of a Rasch model from β[1]=0 to ∑β = 0
+"""
+function normalize_sumzero!(
+    values::AbstractVector,
+    vcov::AbstractMatrix{T};
+    I::Int = length(values),
+) where {T<:AbstractFloat}
+    values[1] == 0 || throw(DomainError("first element of values must be zero."))
+    values .-= (sum(values) / I)
+    D = LinearAlgebra.I(I) .- 1 / I
+    vcov .= D * vcov * D'
+    return nothing
 end

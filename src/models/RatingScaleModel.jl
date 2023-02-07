@@ -3,20 +3,27 @@
 
 A type representing a Rating Scale Model
 """
-struct RatingScaleModel{ET<:EstimationType,DT<:AbstractMatrix,PT} <: PolytomousRaschModel{ET,PT}
+struct RatingScaleModel{ET<:EstimationType,DT<:AbstractMatrix,PT} <:
+       PolytomousRaschModel{ET,PT}
     data::DT
     pars::PT
     parnames_beta::Vector{Symbol}
     parnames_tau::Vector{Symbol}
 end
 
-function _get_item_thresholds(model::RatingScaleModel{ET,DT,PT}, i)::Matrix{Float64} where {ET,DT,PT<:Chains}
+function _get_item_thresholds(
+    model::RatingScaleModel{ET,DT,PT},
+    i,
+)::Matrix{Float64} where {ET,DT,PT<:Chains}
     threshold_names = model.parnames_tau
     thresholds = Array(model.pars[threshold_names])
     return thresholds
 end
 
-function _get_item_thresholds(model::RatingScaleModel{ET,DT,PT}, i) where {ET,DT,PT<:StatisticalModel}
+function _get_item_thresholds(
+    model::RatingScaleModel{ET,DT,PT},
+    i,
+) where {ET,DT,PT<:StatisticalModel}
     pars = coef(model.pars)
     threshold_index = getindex.(pars.dicts, model.parnames_tau)
     thresholds = view(pars.array, threshold_index)
@@ -24,7 +31,15 @@ function _get_item_thresholds(model::RatingScaleModel{ET,DT,PT}, i) where {ET,DT
 end
 
 function _turing_model(::Type{RatingScaleModel}; priors)
-    @model function rating_scale_model(y, i, p; I=maximum(i), P=maximum(p), K=maximum(y) - 1, priors=priors)
+    @model function rating_scale_model(
+        y,
+        i,
+        p;
+        I = maximum(i),
+        P = maximum(p),
+        K = maximum(y) - 1,
+        priors = priors,
+    )
         theta ~ filldist(priors.theta, P)
         mu_beta ~ priors.mu_beta
         sigma_beta ~ priors.sigma_beta
@@ -36,6 +51,6 @@ function _turing_model(::Type{RatingScaleModel}; priors)
     end
 end
 
-function RatingScale(eta; check_args=false)
+function RatingScale(eta; check_args = false)
     return PartialCredit(eta; check_args)
 end

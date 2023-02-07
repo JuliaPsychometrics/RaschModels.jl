@@ -5,11 +5,13 @@ using AbstractItemResponseModels.Tests
 using MCMCChains
 using Turing
 using Optim
+using LinearAlgebra
 
 Turing.setprogress!(false)
 
 @testset "RaschModels.jl" begin
     include("utils.jl")
+    include("esf.jl")
     include("test_interface.jl")
     include("models/RaschModel.jl")
     include("models/PolytomousRaschModel.jl")

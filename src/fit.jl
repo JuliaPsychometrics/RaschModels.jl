@@ -25,6 +25,9 @@ If your model features e.g. three categories, they are coded as `1`, `2` and `3`
 ### `alg`
 The estimation algorithm.
 
+The following algorithm is still in development phase, by now only the `RaschModel` is supported.
+- `CML`: Conditional maximum likelihood
+
 For (bayesian) sampling based estimation all `Turing.InferenceAlgorithm` types are supported.
 The following algorithms are reexported from this package:
 
@@ -38,6 +41,14 @@ Bayesian point estimation is supported by
 - `MLE`: Maximum Likelihood (Posterior mean)
 
 ## Examples
+
+### Conditional maximum likelihood estimation
+
+```julia
+X = rand(0:1, 100, 10)
+rasch_fit = fit(RaschModel, X, CML())
+```
+
 ### Bayesian estimation
 Fitting a simple Rasch model with the No-U-Turn-Sampler.
 Note that estimation with `Turing.InterenceAlgorithm` uses the
@@ -65,8 +76,14 @@ rasch_fit = fit(RaschModel, X, MAP())
 ```
 """
 # 0. user facing level
-function fit(modeltype::Type{<:AbstractRaschModel}, data::AbstractMatrix, alg, args...; kwargs...)
-    _fit(modeltype, data, alg, args...; kwargs...)
+function fit(
+    modeltype::Type{<:AbstractRaschModel},
+    data::AbstractMatrix,
+    alg,
+    args...;
+    kwargs...,
+)
+    return _fit(modeltype, data, alg, args...; kwargs...)
 end
 
 # 1. dispatch on model type
@@ -101,7 +118,8 @@ function _fit(modeltype::Type{PartialCreditModel}, data, alg, args...; kwargs...
     fitted, ET = _fit_by_alg(modeltype, data, alg, args...; kwargs...)
 
     parnames_beta = betanames(n_items)
-    parnames_tau = [taunames(maximum(col) - 1, item=i) for (i, col) in enumerate(eachcol(data))]
+    parnames_tau =
+        [taunames(maximum(col) - 1, item = i) for (i, col) in enumerate(eachcol(data))]
 
     DT = typeof(data)
     PT = typeof(fitted)
@@ -109,16 +127,50 @@ function _fit(modeltype::Type{PartialCreditModel}, data, alg, args...; kwargs...
     return PartialCreditModel{ET,DT,PT}(data, fitted, parnames_beta, parnames_tau)
 end
 
-function _fit_by_alg(modeltype, data, alg::Turing.InferenceAlgorithm, args...; priors::Prior=Prior(), kwargs...)
+function _fit_by_alg(
+    modeltype,
+    data,
+    alg::Turing.InferenceAlgorithm,
+    args...;
+    priors::Prior = Prior(),
+    kwargs...,
+)
+    Turing.setadbackend(:reversediff)
+    Turing.setrdcache(true)
+
     y, i, p = matrix_to_long(data)
     model = turing_model(modeltype; priors)
     chain = sample(model(y, i, p), alg, args...; kwargs...)
     return chain, SamplingEstimate
 end
 
-function _fit_by_alg(modeltype, data, alg::Union{Turing.MAP,Turing.MLE}, args...; priors::Prior=Prior(), kwargs...)
+function _fit_by_alg(
+    modeltype,
+    data,
+    alg::Union{Turing.MAP,Turing.MLE},
+    args...;
+    priors::Prior = Prior(),
+    kwargs...,
+)
     y, i, p = matrix_to_long(data)
     model = turing_model(modeltype; priors)
     estimate = optimize(model(y, i, p), alg, args...; kwargs...)
+    return estimate, PointEstimate
+end
+
+function _fit_by_alg(modeltype, data, alg::CML, args...; kwargs...)
+    estimate = _fit_by_cml(modeltype, data, alg, args...; kwargs...)
+    return estimate, PointEstimate
+end
+
+# for CML estimation a separate logic is necessary to follow if missing values in dataset
+function _fit_by_alg(
+    modeltype,
+    data::MatrixWithMissings{T},
+    alg::CML,
+    args...;
+    kwargs...,
+) where {T}
+    estimate = _fit_by_cml(modeltype, data, alg, args...; kwargs...)
     return estimate, PointEstimate
 end
