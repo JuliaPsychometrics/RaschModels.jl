@@ -3,7 +3,8 @@
 
     for model in available_models
         @testset "$model" begin
-            if AbstractItemResponseModels.response_type(model) == AbstractItemResponseModels.Dichotomous
+            if AbstractItemResponseModels.response_type(model) ==
+               AbstractItemResponseModels.Dichotomous
                 data = rand(0:1, 10, 2)
             else
                 data = rand(1:4, 10, 2)

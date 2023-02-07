@@ -26,12 +26,15 @@ end
 # MCMCChains
 function _get_item_parameter(model::PolytomousRaschModel{ET,PT}, i) where {ET,PT<:Chains}
     parname = Symbol("beta[", i, "]")
-    betas = model.pars.value[var=parname]
+    betas = model.pars.value[var = parname]
     return vec(betas)
 end
 
 # StatisticalModel
-function _get_item_parameter(model::PolytomousRaschModel{ET,PT}, i) where {ET,PT<:StatisticalModel}
+function _get_item_parameter(
+    model::PolytomousRaschModel{ET,PT},
+    i,
+) where {ET,PT<:StatisticalModel}
     parname = Symbol("beta[", i, "]")
     pars = coef(model.pars)
     return getindex(pars, parname)
@@ -44,11 +47,14 @@ Fetch the person parameters of `model` for person `p`.
 """
 function getpersonpars(model::PolytomousRaschModel{ET,PT}, p) where {ET,PT<:Chains}
     parname = Symbol("theta[", p, "]")
-    thetas = model.pars.value[var=parname]
+    thetas = model.pars.value[var = parname]
     return vec(thetas)
 end
 
-function getpersonpars(model::PolytomousRaschModel{ET,PT}, p) where {ET,PT<:StatisticalModel}
+function getpersonpars(
+    model::PolytomousRaschModel{ET,PT},
+    p,
+) where {ET,PT<:StatisticalModel}
     parname = Symbol("theta[", p, "]")
     thetas = coef(model.pars)
     return getindex(thetas, parname)
@@ -130,7 +136,8 @@ function iif(model::PolytomousRaschModel{SamplingEstimate}, theta, i)
     category_information = similar(category_probs)
 
     for i in 1:n_samples
-        category_information[i, :] = _icif(PolytomousRaschModel, category_probs[i, :], item_information[i])
+        category_information[i, :] =
+            _icif(PolytomousRaschModel, category_probs[i, :], item_information[i])
     end
 
     return category_information
@@ -143,27 +150,38 @@ function iif(model::PolytomousRaschModel{PointEstimate}, theta, i)
     return category_information
 end
 
-function _iif(model::PolytomousRaschModel{SamplingEstimate}, theta, i; scoring_function=identity)
+function _iif(
+    model::PolytomousRaschModel{SamplingEstimate},
+    theta,
+    i;
+    scoring_function = identity,
+)
     category_probs = irf(model, theta, i)
     score = expected_score(model, theta, i; scoring_function)
 
     info = similar(score)
 
     for i in eachindex(info)
-        info[i] = _iif(PolytomousRaschModel, category_probs[i, :], score[i]; scoring_function)
+        info[i] =
+            _iif(PolytomousRaschModel, category_probs[i, :], score[i]; scoring_function)
     end
 
     return info
 end
 
-function _iif(model::PolytomousRaschModel{PointEstimate}, theta, i; scoring_function=identity)
+function _iif(
+    model::PolytomousRaschModel{PointEstimate},
+    theta,
+    i;
+    scoring_function = identity,
+)
     category_probs = irf(model, theta, i)
     score = expected_score(model, theta, i; scoring_function)
     info = _iif(PolytomousRaschModel, category_probs, score; scoring_function)
     return info
 end
 
-function _iif(::Type{PolytomousRaschModel}, probs, score; scoring_function=identity)
+function _iif(::Type{PolytomousRaschModel}, probs, score; scoring_function = identity)
     info = zero(Float64)
     for (category, prob) in enumerate(probs)
         info += (scoring_function(category) - score)^2 * prob
@@ -184,7 +202,12 @@ Calculate the expected score for a polytomous Rasch model at `theta` for a set o
 `is` can either be a single item index, an array of item indices, or a range of values.
 If `is` is omitted, the expected score for the whole test is calculated.
 """
-function expected_score(model::PolytomousRaschModel{SamplingEstimate}, theta, is; scoring_function=identity)
+function expected_score(
+    model::PolytomousRaschModel{SamplingEstimate},
+    theta,
+    is;
+    scoring_function = identity,
+)
     n_samples = size(model.pars, 1)
     score = zeros(Float64, n_samples)
 
@@ -198,7 +221,12 @@ function expected_score(model::PolytomousRaschModel{SamplingEstimate}, theta, is
     return score
 end
 
-function expected_score(model::PolytomousRaschModel{PointEstimate}, theta, is; scoring_function=identity)
+function expected_score(
+    model::PolytomousRaschModel{PointEstimate},
+    theta,
+    is;
+    scoring_function = identity,
+)
     score = zero(Float64)
 
     for i in is
@@ -211,7 +239,7 @@ function expected_score(model::PolytomousRaschModel{PointEstimate}, theta, is; s
     return score
 end
 
-function expected_score(model::PolytomousRaschModel, theta; scoring_function=identity)
+function expected_score(model::PolytomousRaschModel, theta; scoring_function = identity)
     items = 1:size(model.data, 2)
     score = expected_score(model, theta, items; scoring_function)
     return score
@@ -226,7 +254,12 @@ Calculate the information for a polytomous Rasch model at `theta` for a set of i
 `is` can either be a single item index, an array of item indices, or a range of values.
 If `is` is omitted, the information for the whole test is calculated.
 """
-function information(model::PolytomousRaschModel{SamplingEstimate}, theta, is; scoring_function=identity)
+function information(
+    model::PolytomousRaschModel{SamplingEstimate},
+    theta,
+    is;
+    scoring_function = identity,
+)
     n_samples = size(model.pars, 1)
     info = zeros(Float64, n_samples)
 
@@ -238,7 +271,12 @@ function information(model::PolytomousRaschModel{SamplingEstimate}, theta, is; s
     return info
 end
 
-function information(model::PolytomousRaschModel{PointEstimate}, theta, is; scoring_function=identity)
+function information(
+    model::PolytomousRaschModel{PointEstimate},
+    theta,
+    is;
+    scoring_function = identity,
+)
     info = zero(Float64)
 
     for i in is
@@ -249,7 +287,7 @@ function information(model::PolytomousRaschModel{PointEstimate}, theta, is; scor
     return info
 end
 
-function information(model::PolytomousRaschModel, theta; scoring_function=identity)
+function information(model::PolytomousRaschModel, theta; scoring_function = identity)
     items = 1:size(model.data, 2)
     info = information(model, theta, items; scoring_function)
     return info
