@@ -57,4 +57,6 @@ include("cml.jl")
 
 include("fit.jl")
 
+include("precompile.jl")
+
 end
