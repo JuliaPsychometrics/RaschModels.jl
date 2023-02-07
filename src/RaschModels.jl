@@ -7,14 +7,23 @@ using Reexport
 using ReverseDiff
 using Turing
 
-using NamedArrays 
+using NamedArrays
 using LinearAlgebra
 
 import LinearAlgebra: I
-import StatsAPI: StatisticalModel, coef, coeftable, coefnames, params, informationmatrix, vcov, stderror, loglikelihood
+import StatsAPI:
+    StatisticalModel,
+    coef,
+    coeftable,
+    coefnames,
+    params,
+    informationmatrix,
+    vcov,
+    stderror,
+    loglikelihood
 import StatsBase: CoefTable
-import AbstractItemResponseModels: response_type, person_dimensionality, item_dimensionality,
-    estimation_type
+import AbstractItemResponseModels:
+    response_type, person_dimensionality, item_dimensionality, estimation_type
 
 @reexport begin
     import AbstractItemResponseModels: irf, iif, expected_score, information, fit

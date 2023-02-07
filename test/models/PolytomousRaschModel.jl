@@ -10,7 +10,7 @@
     PRM = RaschModels.PolytomousRaschModel
 
     # scoring function that maps k=1,...,K -> 0,...,1
-    partial_credit(k, K=n_categories) = (k - 1) / (K - 1)
+    partial_credit(k, K = n_categories) = (k - 1) / (K - 1)
 
     @testset "irf" begin
         @test length(RaschModels._irf(PRM, 0.0, zeros(1))) == 2
@@ -68,12 +68,16 @@
         @test all(expected_score(rsm_mcmc, -1e9) .≈ n_items)
         @test all(expected_score(rsm_mcmc, 1e9) .≈ n_categories * n_items)
 
-        @test expected_score(rsm_mcmc, 0.0) == expected_score(rsm_mcmc, 0.0, scoring_function=identity)
-        @test expected_score(rsm_mcmc, 0.0, 1) == expected_score(rsm_mcmc, 0.0, 1, scoring_function=identity)
-        @test expected_score(rsm_mcmc, 0.0, scoring_function=x -> 0) == zeros(n_iter)
+        @test expected_score(rsm_mcmc, 0.0) ==
+              expected_score(rsm_mcmc, 0.0, scoring_function = identity)
+        @test expected_score(rsm_mcmc, 0.0, 1) ==
+              expected_score(rsm_mcmc, 0.0, 1, scoring_function = identity)
+        @test expected_score(rsm_mcmc, 0.0, scoring_function = x -> 0) == zeros(n_iter)
 
-        @test all(expected_score(rsm_mcmc, -1e9, scoring_function=partial_credit) .≈ 0)
-        @test all(expected_score(rsm_mcmc, 1e9, scoring_function=partial_credit) .≈ n_items)
+        @test all(expected_score(rsm_mcmc, -1e9, scoring_function = partial_credit) .≈ 0)
+        @test all(
+            expected_score(rsm_mcmc, 1e9, scoring_function = partial_credit) .≈ n_items,
+        )
 
         @test expected_score(rsm_mle, -1e9, 1) ≈ 1
         @test expected_score(rsm_mle, 1e9, 1) ≈ n_categories
@@ -84,12 +88,14 @@
         @test expected_score(rsm_mle, -1e9) ≈ n_items
         @test expected_score(rsm_mle, 1e9) ≈ n_categories * n_items
 
-        @test expected_score(rsm_mle, 0.0) == expected_score(rsm_mle, 0.0, scoring_function=identity)
-        @test expected_score(rsm_mle, 0.0, 1) == expected_score(rsm_mle, 0.0, 1, scoring_function=identity)
-        @test expected_score(rsm_mle, 0.0, scoring_function=x -> 0) == 0
+        @test expected_score(rsm_mle, 0.0) ==
+              expected_score(rsm_mle, 0.0, scoring_function = identity)
+        @test expected_score(rsm_mle, 0.0, 1) ==
+              expected_score(rsm_mle, 0.0, 1, scoring_function = identity)
+        @test expected_score(rsm_mle, 0.0, scoring_function = x -> 0) == 0
 
-        @test expected_score(rsm_mle, -1e9, scoring_function=partial_credit) ≈ 0
-        @test expected_score(rsm_mle, 1e9, scoring_function=partial_credit) ≈ n_items
+        @test expected_score(rsm_mle, -1e9, scoring_function = partial_credit) ≈ 0
+        @test expected_score(rsm_mle, 1e9, scoring_function = partial_credit) ≈ n_items
     end
 
     @testset "information" begin
@@ -102,12 +108,14 @@
         @test all(information(rsm_mcmc, -1e9) .≈ 0)
         @test all(information(rsm_mcmc, 1e9) .≈ 0)
 
-        @test information(rsm_mcmc, 0.0) == information(rsm_mcmc, 0.0, scoring_function=identity)
-        @test information(rsm_mcmc, 0.0, 1) == information(rsm_mcmc, 0.0, 1, scoring_function=identity)
-        @test information(rsm_mcmc, 0.0, scoring_function=x -> 0) == zeros(n_iter)
+        @test information(rsm_mcmc, 0.0) ==
+              information(rsm_mcmc, 0.0, scoring_function = identity)
+        @test information(rsm_mcmc, 0.0, 1) ==
+              information(rsm_mcmc, 0.0, 1, scoring_function = identity)
+        @test information(rsm_mcmc, 0.0, scoring_function = x -> 0) == zeros(n_iter)
 
-        @test all(information(rsm_mcmc, -1e9, scoring_function=partial_credit) .≈ 0.0)
-        @test all(information(rsm_mcmc, 1e9, scoring_function=partial_credit) .≈ 0.0)
+        @test all(information(rsm_mcmc, -1e9, scoring_function = partial_credit) .≈ 0.0)
+        @test all(information(rsm_mcmc, 1e9, scoring_function = partial_credit) .≈ 0.0)
 
         @test information(rsm_mle, -1e9, 1) ≈ 0
         @test information(rsm_mle, 1e9, 1) ≈ 0
@@ -118,11 +126,13 @@
         @test information(rsm_mle, -1e9) ≈ 0
         @test information(rsm_mle, 1e9) ≈ 0
 
-        @test information(rsm_mle, 0.0) == information(rsm_mle, 0.0, scoring_function=identity)
-        @test information(rsm_mle, 0.0, 1) == information(rsm_mle, 0.0, 1, scoring_function=identity)
-        @test information(rsm_mle, 0.0, scoring_function=x -> 0) == 0.0
+        @test information(rsm_mle, 0.0) ==
+              information(rsm_mle, 0.0, scoring_function = identity)
+        @test information(rsm_mle, 0.0, 1) ==
+              information(rsm_mle, 0.0, 1, scoring_function = identity)
+        @test information(rsm_mle, 0.0, scoring_function = x -> 0) == 0.0
 
-        @test information(rsm_mle, -1e9, scoring_function=partial_credit) ≈ 0.0
-        @test information(rsm_mle, 1e9, scoring_function=partial_credit) ≈ 0.0
+        @test information(rsm_mle, -1e9, scoring_function = partial_credit) ≈ 0.0
+        @test information(rsm_mle, 1e9, scoring_function = partial_credit) ≈ 0.0
     end
 end

@@ -1,13 +1,16 @@
-""" 
+"""
     CML
 
 Conditional maximum likelihood estimation
 
-Note: As of now, only estimation of Rasch model is supported. Further, no person parameters are provided by CML estimation. Warm's weighted likelihood estimation to allow for person parameter estimates will be added soon.
+Note: As of now, only estimation of Rasch model is supported. Further, no person parameters
+are provided by CML estimation. Warm's weighted likelihood estimation to allow for person
+parameter estimates will be added soon.
 
-Arguments: 
+Arguments:
 
-- esf_alg::{<:ESFAlgorithm} : The algorithm for calculating elementary symmetric functions, default = SummationAlgorithm()
+- esf_alg::{<:ESFAlgorithm} : The algorithm for calculating elementary symmetric functions,
+  default = SummationAlgorithm()
 - start : Vector of starting values for β (item difficulties); default = nothing
 - normalize::Bool : Sum-zero normalization of estimates and vcov, default = true
 """
@@ -25,10 +28,8 @@ end
 
 A wrapper struct to store various results from a CML estimation.
 """
-struct CMLResult{
-    V<:NamedArrays.NamedArray,
-    O<:Optim.MultivariateOptimizationResults
-} <: StatisticalModel
+struct CMLResult{V<:NamedArrays.NamedArray,O<:Optim.MultivariateOptimizationResults} <:
+       StatisticalModel
     "modeltype"
     modeltype::Type{<:AbstractRaschModel}
     "point estimates/coefs"
@@ -40,7 +41,7 @@ struct CMLResult{
     "degrees of freedom"
     df::Int
     "elementary symmetric functions"
-    esf::Union{ESF, Dict{Int, <:ESF}}
+    esf::Union{ESF,Dict{Int,<:ESF}}
     "variance-covariance matrix"
     vcov::AbstractMatrix{Float64}
     "cml settings"
@@ -57,7 +58,11 @@ function coeftable(m::CMLResult)
     stderrors = stderror(m)
     tstats = estimates ./ stderrors
 
-    CoefTable([estimates, stderrors, tstats], ["estimate", "stderror", "tstat"], terms)
+    return CoefTable(
+        [estimates, stderrors, tstats],
+        ["estimate", "stderror", "tstat"],
+        terms,
+    )
 end
 
 coef(m::CMLResult) = m.values
@@ -68,44 +73,49 @@ vcov(m::CMLResult) = informationmatrix(m)
 loglikelihood(m::CMLResult) = m.lp
 
 
-function _fit_by_cml(modeltype::Type{RaschModel}, data::AbstractMatrix{T}, alg::CML, args...; kwargs...) where {T<:Integer}
+function _fit_by_cml(
+    modeltype::Type{RaschModel},
+    data::AbstractMatrix{T},
+    alg::CML,
+    args...;
+    kwargs...,
+) where {T<:Integer}
     P, I = size(data)
-    checkcondition(data; P=P, I=I) 
+    checkcondition(data; P = P, I = I)
     cs = vec(sum(data; dims = 1))
 
     Γ = ESF(I)
-    H = zeros(Float64, I-1, I-1)
+    H = zeros(Float64, I - 1, I - 1)
 
     # optimization
     β0 = _set_startvalues(modeltype, cs, I, P, alg)
     neglogLC, g!, h! = optfuns(modeltype, data, Γ, alg.esf_alg)
-    estimate = Optim.optimize(
-        β -> neglogLC(β, cs[2:I]), 
-        (G, β) -> g!(G, β), 
-        β0, 
-        BFGS(), 
-        args...
-    )
+    estimate =
+        Optim.optimize(β -> neglogLC(β, cs[2:I]), (G, β) -> g!(G, β), β0, BFGS(), args...)
 
     # estimate vcov
     h!(H)
-    vcov = cat(0, inv(H), dims=(1, 2))
+    vcov = cat(0, inv(H), dims = (1, 2))
 
     # handle varibles for output
-    values = NamedArrays.NamedArray(
-        estimate.minimizer,
-        Symbol.("beta[" .* string.(1:I) .* "]")
-    )
+    values =
+        NamedArrays.NamedArray(estimate.minimizer, Symbol.("beta[" .* string.(1:I) .* "]"))
     ## sum-zero normalization (∑β = 0), else β[1] = 0
-    alg.normalize && normalize_sumzero!(values, vcov; I = I)   
+    alg.normalize && normalize_sumzero!(values, vcov; I = I)
 
-    return CMLResult(modeltype, values, estimate, -estimate.minimum, I-1, Γ, vcov, alg)
+    return CMLResult(modeltype, values, estimate, -estimate.minimum, I - 1, Γ, vcov, alg)
 end
 
-function _fit_by_cml(modeltype::Type{RaschModel}, data::MatrixWithMissings{T}, alg::CML, args...; kwargs...) where {T<:Integer}
+function _fit_by_cml(
+    modeltype::Type{RaschModel},
+    data::MatrixWithMissings{T},
+    alg::CML,
+    args...;
+    kwargs...,
+) where {T<:Integer}
     response_ind = isresponse.(data)
 
-    checkcondition(data; B = response_ind) 
+    checkcondition(data; B = response_ind)
     checkpatterns(data; response_ind)
 
     P, I = size(data)
@@ -122,7 +132,7 @@ function _fit_by_cml(modeltype::Type{RaschModel}, data::MatrixWithMissings{T}, a
 
     # inits for optimization
     β0 = _set_startvalues(modeltype, cs, I, vec(sum(response_ind, dims = 1)), alg)
-    H = zeros(Float64, I-1, I-1)
+    H = zeros(Float64, I - 1, I - 1)
     vcov = copy(H)
 
     # optimization
@@ -131,26 +141,36 @@ function _fit_by_cml(modeltype::Type{RaschModel}, data::MatrixWithMissings{T}, a
 
     # estimate vcov
     h!(H)
-    vcov = cat(0, inv(H), dims=(1, 2))
+    vcov = cat(0, inv(H), dims = (1, 2))
 
     # handle variables for output
-    values = NamedArrays.NamedArray(estimate.minimizer, Symbol.("beta[" .* string.(1:I) .* "]"))
+    values =
+        NamedArrays.NamedArray(estimate.minimizer, Symbol.("beta[" .* string.(1:I) .* "]"))
     ## sum-zero normalization (∑β = 0), else β[1] = 0
     alg.normalize && normalize_sumzero!(values, vcov; I = I)
 
-    return CMLResult(modeltype, values, estimate, -estimate.minimum, I-1, esf_split, vcov, alg)
+    return CMLResult(
+        modeltype,
+        values,
+        estimate,
+        -estimate.minimum,
+        I - 1,
+        esf_split,
+        vcov,
+        alg,
+    )
 end
 
 # optimization functions
 function optfuns(
-    ::Type{RaschModel}, 
-    data::AbstractMatrix{<:Integer}, 
-    esfstate::ESF, 
-    esf_alg::ESFA; 
+    ::Type{RaschModel},
+    data::AbstractMatrix{<:Integer},
+    esfstate::ESF,
+    esf_alg::ESFA;
     I::Int = size(data, 2),
-    R::Int = I+1
+    R::Int = I + 1,
 ) where {ESFA<:ESFAlgorithm}
-    (;γ0, γ1, γ2) = esfstate
+    (; γ0, γ1, γ2) = esfstate
 
     rs = vec(sum(data, dims = 2))
     rf = gettotals(rs, 0, I)[2:end]
@@ -158,7 +178,7 @@ function optfuns(
     last_β = fill(NaN, I)
     ϵ = ones(Float64, I)
 
-    calculate_common! = function(β, last_β)
+    calculate_common! = function (β, last_β)
         if β != last_β
             copyto!(last_β, β)
             @. ϵ = exp(-β)
@@ -167,7 +187,7 @@ function optfuns(
         return nothing
     end
 
-    neglogLC = function(β, cs)
+    neglogLC = function (β, cs)
         calculate_common!(β, last_β)
         @views cll = -cs'log.(ϵ[2:I]) + rf'log.(γ0[2:R])
         if !isfinite(cll)
@@ -176,19 +196,19 @@ function optfuns(
         return cll
     end
 
-    g! = function(G, β)
+    g! = function (G, β)
         calculate_common!(β, last_β)
         _esf1!(esf_alg, esfstate, ϵ)
         @. γ1 = exp(log(γ1)' - β)'
         rs_ind = rs .!= 0
-        @views G_temp = (.-data[rs_ind, :] .+ γ1[rs[rs_ind], :] ./ 
-            γ0[rs[rs_ind] .+ 1])[:, 2:I]
+        @views G_temp =
+            (.-data[rs_ind, :].+γ1[rs[rs_ind], :]./γ0[rs[rs_ind].+1])[:, 2:I]
         G[1] = 0
         G[2:I] = .-sum(G_temp, dims = 1)
         return nothing
     end
 
-    h! = function(H)
+    h! = function (H)
         _esf2!(esf_alg, esfstate, ϵ)
         @views g0 = γ0[2:R]
         @views g1 = γ1[1:I, 2:I]
@@ -196,8 +216,7 @@ function optfuns(
         g1divg0 = g1 ./ g0
 
         for i in 1:(I-1)
-            @views H[i, :] = rf' * ((g2[:, i, :] ./ g0) .- (g1[:, i] ./ g0) .* 
-               g1divg0)
+            @views H[i, :] = rf' * ((g2[:, i, :] ./ g0) .- (g1[:, i] ./ g0) .* g1divg0)
         end
         return nothing
     end
@@ -205,35 +224,33 @@ function optfuns(
     return neglogLC, g!, h!
 end
 
-function optfuns(::Type{RaschModel}, 
-    data::MatrixWithMissings{<:Integer}, 
-    I_split::Dict{Int, Int}, 
-    cs::Vector{Int}, 
-    rs::Vector{Int}, 
-    rp::ResponsePatterns, 
-    esfstate_split::Dict{Int, <:ESF}, 
+function optfuns(
+    ::Type{RaschModel},
+    data::MatrixWithMissings{<:Integer},
+    I_split::Dict{Int,Int},
+    cs::Vector{Int},
+    rs::Vector{Int},
+    rp::ResponsePatterns,
+    esfstate_split::Dict{Int,<:ESF},
     esf_alg::ESFA;
-    I::Int = size(data, 2)
+    I::Int = size(data, 2),
 ) where {ESFA<:ESFAlgorithm}
     (; patterns, pattern_idx) = rp
 
     # split by response patterns
-    cs_split = Dict(i => vec(sum(data[pattern_idx .== i, v], dims = 1)) 
-        for (i, v) in patterns)
-    rs_split = Dict(i => rs[pattern_idx .== i] 
-        for i in keys(patterns))
-    rf_split = Dict(i => gettotals(v, 0, I_split[i])[2:end] 
-        for (i, v) in rs_split)
-    ϵ_split = Dict(i => ones(Float64, v) 
-        for (i, v) in I_split)
+    cs_split =
+        Dict(i => vec(sum(data[pattern_idx.==i, v], dims = 1)) for (i, v) in patterns)
+    rs_split = Dict(i => rs[pattern_idx.==i] for i in keys(patterns))
+    rf_split = Dict(i => gettotals(v, 0, I_split[i])[2:end] for (i, v) in rs_split)
+    ϵ_split = Dict(i => ones(Float64, v) for (i, v) in I_split)
 
     last_β = fill(NaN, I)
     ϵ = ones(Float64, I)
 
     G_temp = zeros(Float64, I)
-    H_temp = zeros(Float64, I-1, I-1)
+    H_temp = zeros(Float64, I - 1, I - 1)
 
-    calculate_common! = function(β, last_β)
+    calculate_common! = function (β, last_β)
         if β != last_β
             copyto!(last_β, β)
             @. ϵ = exp(-β)
@@ -246,12 +263,13 @@ function optfuns(::Type{RaschModel},
         return nothing
     end
 
-    neglogLC = function(β)
+    neglogLC = function (β)
         calculate_common!(β, last_β)
         cll = 0.0
 
         for (i, v) in I_split
-            @views cll += -cs_split[i]'log.(ϵ_split[i]) + 
+            @views cll +=
+                -cs_split[i]'log.(ϵ_split[i]) +
                 rf_split[i]'log.(esfstate_split[i].γ0[2:(v+1)])
         end
 
@@ -261,7 +279,7 @@ function optfuns(::Type{RaschModel},
         return cll
     end
 
-    g! = function(G, β)
+    g! = function (G, β)
         calculate_common!(β, last_β)
         fill!(G_temp, zero(Float64))
 
@@ -274,17 +292,18 @@ function optfuns(::Type{RaschModel},
             _esf1!(esf_alg, esfstate_i, ϵ_split[i])
             @. esfstate_i.γ1 = exp(log(esfstate_i.γ1)' - β[v])'
 
-            @views G_i = .-data[idx_i, v][rs_ind, :] .+ 
-                esfstate_i.γ1[rs_i[rs_ind], :] ./ esfstate_i.γ0[rs_i[rs_ind] .+ 1]
+            @views G_i =
+                .-data[idx_i, v][rs_ind, :] .+
+                esfstate_i.γ1[rs_i[rs_ind], :] ./ esfstate_i.γ0[rs_i[rs_ind].+1]
             G_temp[v] .-= vec(sum(G_i, dims = 1))
         end
 
         G[1] = 0.0
         G[2:I] = G_temp[2:I]
-        return nothing       
+        return nothing
     end
 
-    h! = function(H)
+    h! = function (H)
         H_temp = fill!(H_temp, zero(Float64))
 
         for (i, v) in patterns
@@ -301,7 +320,7 @@ function optfuns(::Type{RaschModel},
             @views H_temp_i = H_temp[v_est, v_est]
 
             _esf2!(esf_alg, esfstate_i, ϵ_split[i])
-            
+
             @views g0 = esfstate_i.γ0[2:R_i]
             @views g1 = esfstate_i.γ1[1:I_i, iter_est]
             @views g2 = esfstate_i.γ2[1:I_i, iter_est, iter_est]
@@ -309,10 +328,10 @@ function optfuns(::Type{RaschModel},
 
             for i in 1:sum_v_est
                 @views H_temp_i[i, :] .+= vec(
-                    sum(rf_i' * ( 
-                        (g2[:, i, :] ./ g0) .- 
-                        (g1[:, i] ./ g0 ) .* g1divg0
-                    ); dims = 1)
+                    sum(
+                        rf_i' * ((g2[:, i, :] ./ g0) .- (g1[:, i] ./ g0) .* g1divg0);
+                        dims = 1,
+                    ),
                 )
             end
         end
@@ -325,13 +344,21 @@ function optfuns(::Type{RaschModel},
 end
 
 # functions for setting starting values for β
-function _set_startvalues(modeltype::Type{RaschModel}, cs::Vector{Int}, I::Int, P::Union{Int, Vector{Int}}, alg::CML)
+function _set_startvalues(
+    modeltype::Type{RaschModel},
+    cs::Vector{Int},
+    I::Int,
+    P::Union{Int,Vector{Int}},
+    alg::CML,
+)
     start = zeros(Float64, I)
 
     if isnothing(alg.start)
         start = _get_startvalues(modeltype, cs, I, P)
     else
-        length(alg.start) == I || throw(DimensionMismatch("vector of starting values must be the same length of items"))
+        length(alg.start) == I || throw(
+            DimensionMismatch("vector of starting values must be the same length of items"),
+        )
     end
 
     if start[1] != 0
@@ -371,24 +398,31 @@ end
     checkcondition(A::AbstractMatrix{<:Integer})
     checkcondition(A::MatrixWithMissings{<:Integer})
 
-Check if a response matrix A is well-conditioned according to Fischer (1981). If no missing values are present in response matrix A, the check is based on sufficient marginal sums (Equation 12/Lemma 4 in Fischer, 1981).
-On the other hand, if missing values exists, the check is using a graph-theoretic approach (Lemma 6 and 7 in Fischer, 1981).
+Check if a response matrix A is well-conditioned according to Fischer (1981). If no missing
+values are present in response matrix A, the check is based on sufficient marginal sums
+(Equation 12/Lemma 4 in Fischer, 1981).
+On the other hand, if missing values exists, the check is using a graph-theoretic approach
+(Lemma 6 and 7 in Fischer, 1981).
 
 # References
-
-- Fischer, G.H. (1981). On the existence and uniqueness of maximum-likelihood estimates in the Rasch model. *Psychometrika, 46*, 59--76.
+- Fischer, G.H. (1981). On the existence and uniqueness of maximum-likelihood estimates in
+the Rasch model. *Psychometrika, 46*, 59--76.
 
 """
-function checkcondition(A::AbstractMatrix{T}; P::Int = size(A, 1), I::Int = size(A, 2)) where {T<:Integer}
+function checkcondition(
+    A::AbstractMatrix{T};
+    P::Int = size(A, 1),
+    I::Int = size(A, 2),
+) where {T<:Integer}
     rs = zeros(Int, P)
     cs_ordered = zeros(Int, I)
 
-    cs_ordered .+= sum(A; dims = 1)' 
+    cs_ordered .+= sum(A; dims = 1)'
     sort!(cs_ordered)
 
     rs .+= sum(A; dims = 2)
     filter!(x -> x != 0 && x != I, rs)
-    nr = gettotals(rs, 1, I-1)
+    nr = gettotals(rs, 1, I - 1)
 
     return _checkcondition(nr, cs_ordered, I)
 end
@@ -407,16 +441,20 @@ function _checkcondition(nr::AbstractVector{Int}, cs::AbstractVector{Int}, I::In
             sum_rside += nr[j]
         end
 
-        sum_rside *= I-i
+        sum_rside *= I - i
         sum_rside += sum_cs
 
-        (sum_lside == sum_rside) && throw(DomainError("response matrix is not well-conditioned"))
+        (sum_lside == sum_rside) &&
+            throw(DomainError("response matrix is not well-conditioned"))
 
     end
     return nothing
 end
 
-function checkcondition(A::MatrixWithMissings{T}; B::AbstractMatrix{<:Integer} = isresponse.(A)) where {T<:Integer}
+function checkcondition(
+    A::MatrixWithMissings{T};
+    B::AbstractMatrix{<:Integer} = isresponse.(A),
+) where {T<:Integer}
     size(A) == size(B) || throw(DimensionMismatch("input matrices must match in size"))
     P, I = size(A)
     C = zeros(Int, I, I)
@@ -434,6 +472,7 @@ function checkcondition(A::MatrixWithMissings{T}; B::AbstractMatrix{<:Integer} =
 
     C += LinearAlgebra.I
 
-    any(i -> i ≤ 0, C^(I-1)) && throw(DomainError("response matrix is not well-conditioned"))
+    any(i -> i ≤ 0, C^(I - 1)) &&
+        throw(DomainError("response matrix is not well-conditioned"))
     return nothing
 end
