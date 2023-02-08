@@ -6,7 +6,6 @@ using Optim
 using Reexport
 using ReverseDiff
 using Turing
-using StaticArrays
 
 using NamedArrays
 using LinearAlgebra
