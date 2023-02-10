@@ -33,7 +33,7 @@ struct PersonParameterResult{PPA<:PersonParameterAlgorithm}
     alg::PPA
 end
 
-function _fit_personpars(alg::PPA, modeltype::Type{RaschModel}, values::AbstractVector{<:AbstractFloat}) where {PPA<:PersonParameterAlgorithm}
+function _fit_personpars(modeltype::Type{RaschModel}, values::AbstractVector{<:AbstractFloat}, alg::PPA) where {PPA<:PersonParameterAlgorithm}
     personpars, se = _fit_personpars_by_alg(alg, modeltype, values)
     return PersonParameterResult(modeltype, personpars, se, alg)
 end
