@@ -91,3 +91,37 @@ function normalize_sumzero!(
     vcov .= D * vcov * D'
     return nothing
 end
+
+function getrowsums(data; P = size(data, 1), I = size(data, 2))
+    rs = zeros(Int, P)
+
+    for p in eachindex(rs)
+        for i in 1:I
+            response = data[p, i]
+            if ismissing(response)
+                rs[p] += 0
+            else 
+                rs[p] += response    
+            end
+        end 
+    end
+
+    return rs
+end
+
+function getcolsums(data; P = size(data, 1), I = size(data, 2))
+    cs = zeros(Int, I)
+
+    for i in eachindex(cs)
+        for p in 1:P
+            response = data[p, i]
+            if ismissing(response)
+                cs[i] += 0
+            else 
+                cs[i] += response    
+            end
+        end 
+    end
+
+    return cs
+end
