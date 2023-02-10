@@ -3,6 +3,7 @@ module RaschModels
 using AbstractItemResponseModels
 using LogExpFunctions
 using Optim
+using Roots
 using Reexport
 using ReverseDiff
 using Turing
@@ -53,6 +54,7 @@ include("models/RatingScaleModel.jl")
 include("turing_model.jl")
 
 include("esf.jl")
+include("personpars.jl")
 include("cml.jl")
 
 include("fit.jl")

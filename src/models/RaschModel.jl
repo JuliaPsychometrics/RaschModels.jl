@@ -31,8 +31,8 @@ Fetch the person parameters of `model` for person `p`.
 """
 function getpersonpars(model::RaschModel{ET,DT,PT}, p) where {ET,DT,PT<:Chains}
     parname = Symbol("theta[", p, "]")
-    thetas = model.pars.value[var = parname]
-    return vec(thetas)
+    thetas = vec(view(model.pars.value, var = parname))
+    return thetas
 end
 
 function getpersonpars(model::RaschModel{ET,DT,PT}, p) where {ET,DT,PT<:StatisticalModel}
@@ -228,6 +228,19 @@ end
 function information(model::RaschModel, theta; scoring_function::F = identity) where {F}
     items = 1:size(model.data, 2)
     info = information(model, theta, items; scoring_function)
+    return info
+end
+
+function _information(
+    modeltype::Type{RaschModel},
+    theta::AbstractFloat,
+    betas::AbstractVector{<:AbstractFloat};
+    scoring_function::F = identity,
+) where {F}
+    info = zero(Float64)
+    for beta in betas
+        info += _iif(modeltype, theta, beta; scoring_function)
+    end
     return info
 end
 
