@@ -97,7 +97,7 @@ function _fit_by_cml(
 
     # handle varibles for output
     values =
-        NamedArrays.NamedArray(estimate.minimizer, Symbol.("beta[" .* string.(1:I) .* "]"))
+        NamedArrays.NamedArray(estimate.minimizer, betanames(I))
     ## sum-zero normalization (∑β = 0), else β[1] = 0
     alg.normalize && normalize_sumzero!(values, vcov; I = I)
 
@@ -140,7 +140,7 @@ function _fit_by_cml(
 
     # handle variables for output
     values =
-        NamedArrays.NamedArray(estimate.minimizer, Symbol.("beta[" .* string.(1:I) .* "]"))
+        NamedArrays.NamedArray(estimate.minimizer, betanames(I))
     ## sum-zero normalization (∑β = 0), else β[1] = 0
     alg.normalize && normalize_sumzero!(values, vcov; I = I)
 

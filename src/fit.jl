@@ -185,7 +185,7 @@ function _fit_by_alg(
     personresult = _fit_personpars(alg_pp, modeltype, itemresult.values)
     thetas_mapped = NamedArrays.NamedArray(
         _maptheta(rs, personresult.values),
-        Symbol.("theta[" .* string.(1:P) .* "]")
+        thetanames(P)
     )
 
     # combine parameter estimates

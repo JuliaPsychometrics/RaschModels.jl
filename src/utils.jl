@@ -52,6 +52,15 @@ function betanames(n)
 end
 
 """
+    thetanames(n)
+
+Construct a vector of parameter names for person parameters.
+"""
+function thetanames(n)
+    return [Symbol("theta[", p, "]") for p in 1:n]
+end
+
+"""
     taunames(n; item=nothing)
 
 Construct a vector of parameter names for item thresholds.
