@@ -1,3 +1,14 @@
+struct CombinedCMLResult{V<:NamedArrays.NamedArray}
+    "modeltype"
+    modeltype::Type{<:AbstractRaschModel}
+    "combined point estimates/coefs"
+    values::V
+    "results of item parameter estimation (CML)"
+    itemresult::CMLResult
+    "results of person parameter estimation"
+    personresult::PersonParameterResult
+end
+
 """
     fit(modeltype::Type{<: AbstractRaschModel}, data, alg, args...; kwargs...)
 
@@ -158,7 +169,28 @@ function _fit_by_alg(
     return estimate, PointEstimate
 end
 
-function _fit_by_alg(modeltype, data, alg::CML, args...; kwargs...)
-    estimate = _fit_by_cml(modeltype, data, alg, args...; kwargs...)
-    return estimate, PointEstimate
+function _fit_by_alg(
+    modeltype,
+    data,
+    alg::CML,
+    alg_pp = PersonParameterWLE(),
+    args...;
+    kwargs...,
+)
+    P, I = size(data)
+    rs = getrowsums(data)
+    # estimate item parameters
+    itemresult = _fit_by_cml(modeltype, data, alg, args...; kwargs...)
+    # estimate person parameters
+    personresult = _fit_personpars(alg_pp, modeltype, itemresult.values)
+    thetas_mapped = NamedArrays.NamedArray(
+        _maptheta(rs, personresult.values),
+        Symbol.("theta[" .* string.(1:P) .* "]")
+    )
+
+    # combine parameter estimates
+    values_combined = [itemresult.values; thetas_mapped]
+
+    combinedresult = CombinedCMLResult(modeltype, values_combined, itemresult, personresult)
+    return combinedresult, PointEstimate
 end
