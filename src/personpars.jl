@@ -1,5 +1,20 @@
 abstract type PersonParameterAlgorithm end
+"""
+    PersonParameterWLE
+
+Warm's weighted likelihood estimation for person parameters of Rasch models
+
+# References
+
+- Warm, T. A. (1989). Weighted likelihood estimation of ability in item response theory. Psychometrika, 54, 427-450. doi: 10.1007/BF02294627
+"""
 struct PersonParameterWLE <: PersonParameterAlgorithm end
+
+"""
+    PersonParameterMLE
+
+Maximum likelihood estimation for person parameters of Rasch models
+"""
 struct PersonParameterMLE <: PersonParameterAlgorithm end
 
 """
