@@ -54,8 +54,8 @@ include("models/RatingScaleModel.jl")
 include("turing_model.jl")
 
 include("esf.jl")
-include("personpars.jl")
 include("cml.jl")
+include("personpars.jl")
 
 include("fit.jl")
 

@@ -182,7 +182,7 @@ function _fit_by_alg(
     # estimate item parameters
     itemresult = _fit_by_cml(modeltype, data, alg, args...; kwargs...)
     # estimate person parameters
-    personresult = _fit_personpars(modeltype, itemresult.values, alg_pp)
+    personresult = _fit_personpars(itemresult, alg_pp)
     thetas_mapped = NamedArrays.NamedArray(
         _maptheta(rs, personresult.values),
         thetanames(P)
