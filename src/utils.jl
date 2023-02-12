@@ -1,4 +1,5 @@
 UN{T} = Union{T,Nothing}
+isresponse(x) = !ismissing(x)
 
 """
     matrix_to_long(m::AbstractMatrix; dropmissing=true)
@@ -107,9 +108,7 @@ function getrowsums(data; P = size(data, 1), I = size(data, 2))
     for p in eachindex(rs)
         for i in 1:I
             response = data[p, i]
-            if ismissing(response)
-                rs[p] += 0
-            else 
+            if isresponse(response)
                 rs[p] += response    
             end
         end 
@@ -124,9 +123,7 @@ function getcolsums(data; P = size(data, 1), I = size(data, 2))
     for i in eachindex(cs)
         for p in 1:P
             response = data[p, i]
-            if ismissing(response)
-                cs[i] += 0
-            else 
+            if isresponse(response) 
                 cs[i] += response    
             end
         end 
