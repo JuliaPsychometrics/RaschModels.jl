@@ -54,7 +54,7 @@ If the response value `y` is omitted, the item response probability for a correc
 function irf(model::RaschModel{SamplingEstimate}, theta, i, y = 1)
     n_iter = length(getitempars(model, i))
     probs = zeros(Float64, n_iter)
-    add_irf!(model, probs, theta, i, y)
+    add_irf!(model, probs, theta, i, y, scoring_function = x -> one(x))
     return probs
 end
 

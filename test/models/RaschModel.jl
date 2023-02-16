@@ -19,6 +19,12 @@
         @test RaschModels._irf(RaschModel, 0.0, 0.0, 1) == 0.5
         @test RaschModels._irf(RaschModel, 0.0, -99.9, 1) > 0.99
         @test RaschModels._irf(RaschModel, 0.0, 99.9, 1) < 0.001
+
+        @test all(irf(model_mcmc, -99.9, 1, 1) .< 0.001)
+        @test all(irf(model_mcmc, -99.9, 1, 0) .> 0.99)
+
+        @test irf(model_mle, -99.9, 1, 1) < 0.001
+        @test irf(model_mle, -99.9, 1, 0) > 0.99
     end
 
     @testset "iif" begin
@@ -27,6 +33,12 @@
         @test RaschModels._iif(RaschModel, 0.0, -99.9) < 0.001
         @test RaschModels._iif(RaschModel, 0.0, 0.0) ==
               RaschModels._iif(RaschModel, 0.0, 0.0; scoring_function = identity)
+
+        @test all(iif(model_mcmc, -99.9, 1, 1) .< 0.001)
+        @test all(iif(model_mcmc, -99.9, 1, 0) .< 0.001)
+
+        @test iif(model_mle, -99.9, 1, 1) < 0.001
+        @test iif(model_mle, -99.9, 1, 0) < 0.001
     end
 
     @testset "expected_score" begin
