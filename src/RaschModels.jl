@@ -40,6 +40,7 @@ export RatingScaleModel
 export RaschModel
 
 export CML, SummationAlgorithm
+export PersonParameterWLE, PersonParameterMLE
 
 include("utils.jl")
 include("types.jl")

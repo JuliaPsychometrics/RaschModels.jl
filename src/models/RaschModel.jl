@@ -231,19 +231,6 @@ function information(model::RaschModel, theta; scoring_function::F = identity) w
     return info
 end
 
-function _information(
-    modeltype::Type{RaschModel},
-    theta::AbstractFloat,
-    betas::AbstractVector{<:AbstractFloat};
-    scoring_function::F = identity,
-) where {F}
-    info = zero(Float64)
-    for beta in betas
-        info += _iif(modeltype, theta, beta; scoring_function)
-    end
-    return info
-end
-
 # Turing implementation
 function _turing_model(::Type{RaschModel}; priors)
     @model function rasch_model(y, i, p; I = maximum(i), P = maximum(p), priors = priors)

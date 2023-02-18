@@ -10,12 +10,16 @@ Warm's weighted likelihood estimation for person parameters of Rasch models
 """
 struct PersonParameterWLE <: PersonParameterAlgorithm end
 
+rational_bounds(::Type{PersonParameterWLE}) = true
+
 """
     PersonParameterMLE
 
 Maximum likelihood estimation for person parameters of Rasch models
 """
 struct PersonParameterMLE <: PersonParameterAlgorithm end
+
+rational_bounds(::Type{PersonParameterMLE}) = false
 
 """
     PersonParameterResult
@@ -30,103 +34,93 @@ struct PersonParameterResult{PPA<:PersonParameterAlgorithm}
     "standard errors"
     se::AbstractVector
     "estimation algorithm"
-    alg::PPA
+    alg::Type{PPA}
 end
 
-function _fit_personpars(cmlresult::CMLResult, alg::PPA) where {PPA<:PersonParameterAlgorithm}
+function _fit_personpars(cmlresult::CMLResult, alg::Type{PPA}) where {PPA<:PersonParameterAlgorithm}
     (; modeltype, values) = cmlresult
-    personpars, se = _fit_personpars_by_alg(alg, modeltype, values)
-    return PersonParameterResult(modeltype, personpars, se, alg)
+    return _fit_personpars(modeltype, values, alg) 
 end
 
-function _fit_personpars(modeltype::Type{RaschModel}, values::AbstractVector{<:AbstractFloat}, alg::PPA) where {PPA<:PersonParameterAlgorithm}
-    personpars, se = _fit_personpars_by_alg(alg, modeltype, values)
-    return PersonParameterResult(modeltype, personpars, se, alg)
-end
-
-function _fit_personpars_by_alg(
-    ::PersonParameterWLE,
-    modeltype::Type{RaschModel},
-    betas::AbstractVector{T};
-    I = length(betas),
-) where {T<:AbstractFloat}
+function _fit_personpars(modeltype::Type{RaschModel}, betas::AbstractVector{T}, alg::Type{PPA}; I = length(betas)) where {T<:AbstractFloat, PPA<:PersonParameterAlgorithm}
     personpars = zeros(T, I + 1)
     se = zeros(T, I + 1)
     init_x = zero(T)
+
     for r in eachindex(personpars)
-        personpars[r] += find_zero(x -> _wle_ll(x, betas, r), init_x)
-        se[r] += sqrt(1 / _information(modeltype, personpars[r], betas))
+        # if estimation of rational bounds is not possible 
+        if (r == 1 || r == I+1) && !rational_bounds(alg)
+            personpars[r] += NaN
+            se[r] += NaN
+            continue
+        end
+        personpars[r] += find_zero(x -> optfun(alg, modeltype, x, betas, r), init_x)
+        se[r] += √(var(alg, modeltype, personpars[r], betas))
     end
 
-    return personpars, se
+    return PersonParameterResult(modeltype, personpars, se, alg)
 end
 
-function _wle_ll(
+function optfun(
+    ::Type{PersonParameterWLE},
+    modeltype::Type{RaschModel},
     theta::T,
     betas::AbstractVector{T},
-    r::Int;
-    irf::Function = (b) -> _irf(RaschModel, theta, b, 1),
-    I = length(betas),
+    r::Int
 ) where {T<:AbstractFloat}
-    ll = zero(T)
-    prop = zeros(T, I)
-    info = ones(T, I)
     sum_prop = zero(T)
-    sum_info = zero(T)
-    ll_part = zero(T)
+    info = zero(T)
+    sum_deriv = zero(T)
 
-    for (i,v) in enumerate(betas)
-        prop_i = irf(v)
-        prop[i] += prop_i
-        info[i] -= prop_i
-        info[i] *= prop_i
-        sum_prop += prop[i]
-        sum_info += info[i]
-        ll_part += info[i] * (1 - (2 * prop[i]))
+    for beta in betas
+        prop_i = _irf(modeltype, theta, beta, 1)
+        sum_prop += prop_i
+
+        info_i = (1 - prop_i) * prop_i
+        info += info_i
+
+        sum_deriv += info_i * (1 - (2 * prop_i))
     end
 
-    ll += (r - 1)
-    ll -= sum_prop - (ll_part / (2 * sum_info))
-
-    return ll
+    return (r - 1) - (sum_prop - (sum_deriv / (2 * info)))
 end
 
-function _fit_personpars_by_alg(
-    ::PersonParameterMLE,
+function optfun(
+    ::Type{PersonParameterMLE},
     modeltype::Type{RaschModel},
-    betas::AbstractVector{T};
-    I = length(betas),
+    theta::T,
+    betas::AbstractVector{T},
+    r::Int
 ) where {T<:AbstractFloat}
-    personpars = Vector{Union{Nothing, T}}(nothing, I+1)
-    se = Vector{Union{Nothing, T}}(nothing, I+1)
-
-    personpars_est = zeros(T, I - 1)
-    se_est = zeros(T, I - 1)
-    init_x = zero(T)
-
-    for r in eachindex(personpars_est)
-        personpars_est[r] += find_zero(x -> _mle_ll(x, betas, r), init_x)
-        se_est[r] += sqrt(1 / _information(modeltype, personpars_est[r], betas))
+    optvalue = zero(T)
+    for beta in betas 
+        optvalue += _irf(modeltype, theta, beta, 1)
     end
-
-    personpars[2:I] .= personpars_est
-    se[2:I] .= se_est
-
-    return personpars, se
+    return (r - 1) - optvalue
 end
 
-function _mle_ll(
-    theta::AbstractFloat,
+function var(
+    ::Type{PersonParameterWLE},
+    modeltype::Type{RaschModel},
+    theta::T,
     betas::AbstractVector{T},
-    r::Int;
-    irf::Function = (b) -> _irf(RaschModel, theta, b, 1) 
 ) where {T<:AbstractFloat}
-    ll = zero(T)
-    for b in betas 
-        ll += irf(b)
+    return var(PersonParameterMLE, modeltype, theta, betas)
+end
+
+function var(
+    ::Type{PersonParameterMLE},
+    modeltype::Type{RaschModel},
+    theta::T,
+    betas::AbstractVector{T},
+) where {T<:AbstractFloat}
+    info = zero(T)
+
+    for beta in betas
+        info += _iif(modeltype, theta, beta)
     end
-    ll = r - ll
-    return ll
+
+    return 1 / info
 end
 
 function _maptheta(rs::AbstractVector{Int}, thetas::AbstractVector{T}) where {T}

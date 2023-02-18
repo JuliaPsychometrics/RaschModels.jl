@@ -173,11 +173,11 @@ function _fit_by_alg(
     modeltype,
     data,
     alg::CML,
-    alg_pp = PersonParameterWLE(),
+    alg_pp = PersonParameterWLE,
     args...;
     kwargs...,
 )
-    P, I = size(data)
+    P = size(data, 1)
     rs = getrowsums(data)
     # estimate item parameters
     itemresult = _fit_by_cml(modeltype, data, alg, args...; kwargs...)
