@@ -29,6 +29,11 @@
         @test RaschModels.betanames(2) == [Symbol("beta[1]"), Symbol("beta[2]")]
     end
 
+    @testset "thetanames" begin
+        @test RaschModels.thetanames(1) == [Symbol("theta[1]")]
+        @test RaschModels.thetanames(2) == [Symbol("theta[1]"), Symbol("theta[2]")]
+    end
+
     @testset "taunames" begin
         @test RaschModels.taunames(1) == [Symbol("tau[1]")]
         @test RaschModels.taunames(2) == [Symbol("tau[1]"), Symbol("tau[2]")]
@@ -47,6 +52,40 @@
         @test length(totals_restricted) == length(1:4)
         @test eltype(totals_restricted) == Int
         @test totals_restricted == [0, 2, 1, 1]
+    end
+
+    @testset "getrowsums" begin
+        m = [
+            0 0 1;
+            0 1 0;
+            1 1 0;
+            1 1 1;
+            0 0 0
+        ]
+        P, I = size(m)
+        rs = RaschModels.getrowsums(m)
+        @test length(rs) == P 
+        @test minimum(rs) == 0
+        @test maximum(rs) == I
+        @test eltype(rs) == Int
+        @test rs == [1, 1, 2, 3, 0]
+    end
+
+    @testset "getcolsums" begin
+         m = [
+            0 0 0 1;
+            0 0 1 0;
+            0 1 1 0;
+            0 1 1 1;
+            0 0 0 0
+        ]
+        P, I = size(m)
+        cs = RaschModels.getcolsums(m)
+        @test length(cs) == I 
+        @test minimum(cs) == 0
+        @test maximum(cs) == 3
+        @test eltype(cs) == Int
+        @test cs == [0, 2, 3, 2]       
     end
 
     @testset "normalize_sumzero!" begin

@@ -31,8 +31,8 @@ Fetch the person parameters of `model` for person `p`.
 """
 function getpersonpars(model::RaschModel{ET,DT,PT}, p) where {ET,DT,PT<:Chains}
     parname = Symbol("theta[", p, "]")
-    thetas = model.pars.value[var = parname]
-    return vec(thetas)
+    thetas = vec(view(model.pars.value, var = parname))
+    return thetas
 end
 
 function getpersonpars(model::RaschModel{ET,DT,PT}, p) where {ET,DT,PT<:StatisticalModel}

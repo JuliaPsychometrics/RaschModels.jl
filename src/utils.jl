@@ -1,4 +1,5 @@
 UN{T} = Union{T,Nothing}
+isresponse(x) = !ismissing(x)
 
 """
     matrix_to_long(m::AbstractMatrix; dropmissing=true)
@@ -52,6 +53,15 @@ function betanames(n)
 end
 
 """
+    thetanames(n)
+
+Construct a vector of parameter names for person parameters.
+"""
+function thetanames(n)
+    return [Symbol("theta[", p, "]") for p in 1:n]
+end
+
+"""
     taunames(n; item=nothing)
 
 Construct a vector of parameter names for item thresholds.
@@ -90,4 +100,34 @@ function normalize_sumzero!(
     D = LinearAlgebra.I(I) .- 1 / I
     vcov .= D * vcov * D'
     return nothing
+end
+
+function getrowsums(data; P = size(data, 1), I = size(data, 2))
+    rs = zeros(Int, P)
+
+    for p in eachindex(rs)
+        for i in 1:I
+            response = data[p, i]
+            if isresponse(response)
+                rs[p] += response    
+            end
+        end 
+    end
+
+    return rs
+end
+
+function getcolsums(data; P = size(data, 1), I = size(data, 2))
+    cs = zeros(Int, I)
+
+    for i in eachindex(cs)
+        for p in 1:P
+            response = data[p, i]
+            if isresponse(response) 
+                cs[i] += response    
+            end
+        end 
+    end
+
+    return cs
 end

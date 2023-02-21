@@ -12,6 +12,7 @@ Turing.setprogress!(false)
 @testset "RaschModels.jl" begin
     include("utils.jl")
     include("esf.jl")
+    include("personpars.jl")
     include("test_interface.jl")
     include("models/RaschModel.jl")
     include("models/PolytomousRaschModel.jl")

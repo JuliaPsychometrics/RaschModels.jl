@@ -1,6 +1,5 @@
 # convenience types and methods for handling missing data
 MatrixWithMissings{T} = AbstractMatrix{Union{T,Missing}}
-isresponse(x) = !ismissing(x)
 
 """
     ResponsePatterns

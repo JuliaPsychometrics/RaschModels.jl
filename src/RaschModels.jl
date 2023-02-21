@@ -3,6 +3,7 @@ module RaschModels
 using AbstractItemResponseModels
 using LogExpFunctions
 using Optim
+using Roots
 using Reexport
 using ReverseDiff
 using Turing
@@ -39,6 +40,7 @@ export RatingScaleModel
 export RaschModel
 
 export CML, SummationAlgorithm
+export PersonParameterWLE, PersonParameterMLE
 
 include("utils.jl")
 include("types.jl")
@@ -54,6 +56,7 @@ include("turing_model.jl")
 
 include("esf.jl")
 include("cml.jl")
+include("personpars.jl")
 
 include("fit.jl")
 

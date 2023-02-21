@@ -3,9 +3,7 @@
 
 Conditional maximum likelihood estimation
 
-Note: As of now, only estimation of Rasch model is supported. Further, no person parameters
-are provided by CML estimation. Warm's weighted likelihood estimation to allow for person
-parameter estimates will be added soon.
+Note: As of now, only estimation of a dichotomous Rasch model is supported.
 
 Arguments:
 
@@ -82,7 +80,7 @@ function _fit_by_cml(
 ) where {T<:Integer}
     P, I = size(data)
     checkcondition(data; P = P, I = I)
-    cs = vec(sum(data; dims = 1))
+    cs = getcolsums(data)
 
     Γ = ESF(I)
     H = zeros(Float64, I - 1, I - 1)
@@ -99,7 +97,7 @@ function _fit_by_cml(
 
     # handle varibles for output
     values =
-        NamedArrays.NamedArray(estimate.minimizer, Symbol.("beta[" .* string.(1:I) .* "]"))
+        NamedArrays.NamedArray(estimate.minimizer, betanames(I))
     ## sum-zero normalization (∑β = 0), else β[1] = 0
     alg.normalize && normalize_sumzero!(values, vcov; I = I)
 
@@ -118,14 +116,11 @@ function _fit_by_cml(
     checkcondition(data; B = response_ind)
     checkpatterns(data; response_ind)
 
-    P, I = size(data)
+    I = size(data, 2)
     rp = ResponsePatterns(data; response_ind)
 
-    data_nomissings = copy(data)
-    data_nomissings[.!response_ind] .= 0
-
-    cs::Vector{Int64} = vec(sum(data_nomissings; dims = 1))
-    rs::Vector{Int64} = vec(sum(data_nomissings; dims = 2))
+    rs = getrowsums(data)
+    cs = getcolsums(data)
 
     I_split = Dict(i => sum(v) for (i, v) in rp.patterns)
     esf_split = Dict(i => ESF(v) for (i, v) in I_split)
@@ -145,7 +140,7 @@ function _fit_by_cml(
 
     # handle variables for output
     values =
-        NamedArrays.NamedArray(estimate.minimizer, Symbol.("beta[" .* string.(1:I) .* "]"))
+        NamedArrays.NamedArray(estimate.minimizer, betanames(I))
     ## sum-zero normalization (∑β = 0), else β[1] = 0
     alg.normalize && normalize_sumzero!(values, vcov; I = I)
 
@@ -172,7 +167,7 @@ function optfuns(
 ) where {ESFA<:ESFAlgorithm}
     (; γ0, γ1, γ2) = esfstate
 
-    rs = vec(sum(data, dims = 2))
+    rs = getrowsums(data)
     rf = gettotals(rs, 0, I)[2:end]
 
     last_β = fill(NaN, I)
@@ -239,7 +234,7 @@ function optfuns(
 
     # split by response patterns
     cs_split =
-        Dict(i => vec(sum(data[pattern_idx.==i, v], dims = 1)) for (i, v) in patterns)
+        Dict(i => getcolsums(data[pattern_idx.==i, v]) for (i, v) in patterns)
     rs_split = Dict(i => rs[pattern_idx.==i] for i in keys(patterns))
     rf_split = Dict(i => gettotals(v, 0, I_split[i])[2:end] for (i, v) in rs_split)
     ϵ_split = Dict(i => ones(Float64, v) for (i, v) in I_split)
@@ -417,7 +412,7 @@ function checkcondition(
     rs = zeros(Int, P)
     cs_ordered = zeros(Int, I)
 
-    cs_ordered .+= sum(A; dims = 1)'
+    cs_ordered .+= getcolsums(A)
     sort!(cs_ordered)
 
     rs .+= sum(A; dims = 2)
