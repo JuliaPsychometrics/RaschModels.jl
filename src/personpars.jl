@@ -10,7 +10,7 @@ Warm's weighted likelihood estimation for person parameters of Rasch models
 """
 struct PersonParameterWLE <: PersonParameterAlgorithm end
 
-rational_bounds(::Type{PersonParameterWLE}) = true
+rational_bounds(::PersonParameterWLE) = true
 
 """
     PersonParameterMLE
@@ -19,7 +19,7 @@ Maximum likelihood estimation for person parameters of Rasch models
 """
 struct PersonParameterMLE <: PersonParameterAlgorithm end
 
-rational_bounds(::Type{PersonParameterMLE}) = false
+rational_bounds(::PersonParameterMLE) = false
 
 """
     PersonParameterResult
@@ -34,15 +34,15 @@ struct PersonParameterResult{PPA<:PersonParameterAlgorithm}
     "standard errors"
     se::AbstractVector
     "estimation algorithm"
-    alg::Type{PPA}
+    alg::PPA
 end
 
-function _fit_personpars(cmlresult::CMLResult, alg::Type{PPA}) where {PPA<:PersonParameterAlgorithm}
+function _fit_personpars(cmlresult::CMLResult, alg::PPA) where {PPA<:PersonParameterAlgorithm}
     (; modeltype, values) = cmlresult
     return _fit_personpars(modeltype, values, alg) 
 end
 
-function _fit_personpars(modeltype::Type{RaschModel}, betas::AbstractVector{T}, alg::Type{PPA}; I = length(betas)) where {T<:AbstractFloat, PPA<:PersonParameterAlgorithm}
+function _fit_personpars(modeltype::Type{RaschModel}, betas::AbstractVector{T}, alg::PPA; I = length(betas)) where {T<:AbstractFloat, PPA<:PersonParameterAlgorithm}
     personpars = zeros(T, I + 1)
     se = zeros(T, I + 1)
     init_x = zero(T)
@@ -62,7 +62,7 @@ function _fit_personpars(modeltype::Type{RaschModel}, betas::AbstractVector{T}, 
 end
 
 function optfun(
-    ::Type{PersonParameterWLE},
+    ::PersonParameterWLE,
     modeltype::Type{RaschModel},
     theta::T,
     betas::AbstractVector{T},
@@ -86,7 +86,7 @@ function optfun(
 end
 
 function optfun(
-    ::Type{PersonParameterMLE},
+    ::PersonParameterMLE,
     modeltype::Type{RaschModel},
     theta::T,
     betas::AbstractVector{T},
@@ -100,16 +100,17 @@ function optfun(
 end
 
 function var(
-    ::Type{PersonParameterWLE},
+    ::PersonParameterWLE,
     modeltype::Type{RaschModel},
     theta::T,
     betas::AbstractVector{T},
 ) where {T<:AbstractFloat}
-    return var(PersonParameterMLE, modeltype, theta, betas)
+    # variance equal (asymptotically) to variance of MLE (Warm, 1989) 
+    return var(PersonParameterMLE(), modeltype, theta, betas)
 end
 
 function var(
-    ::Type{PersonParameterMLE},
+    ::PersonParameterMLE,
     modeltype::Type{RaschModel},
     theta::T,
     betas::AbstractVector{T},

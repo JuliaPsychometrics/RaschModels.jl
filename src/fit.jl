@@ -173,10 +173,10 @@ function _fit_by_alg(
     modeltype,
     data,
     alg::CML,
-    alg_pp = PersonParameterWLE,
+    alg_pp::PPA = PersonParameterWLE(),
     args...;
     kwargs...,
-)
+) where {PPA<:PersonParameterAlgorithm}
     P = size(data, 1)
     rs = getrowsums(data)
     # estimate item parameters
