@@ -12,10 +12,10 @@ end
 """
     fit(modeltype::Type{<: AbstractRaschModel}, data, alg, args...; kwargs...)
 
-Fit a Rasch model to response `data`.
+Fit a Rasch Model to response `data`.
 
 ## Arguments
-### `modeltype`
+### modeltype
 An `AbstractRaschModel` type.
 Currently RaschModels.jl implements the following model types:
 
@@ -23,7 +23,7 @@ Currently RaschModels.jl implements the following model types:
 - `RaschModel`
 - `RatingScaleModel`
 
-### `data`
+### data
 The observed data matrix.
 It is assumed that each person corresponds to a row and each item to a column in the matrix.
 
@@ -33,7 +33,7 @@ as `0`.
 For polytomous models, categories are coded as an integer sequence starting from `1`.
 If your model features e.g. three categories, they are coded as `1`, `2` and `3` respectively.
 
-### `alg`
+### alg
 The estimation algorithm.
 
 The following algorithm is still in development phase, by now only the `RaschModel` is supported.
@@ -56,8 +56,8 @@ Bayesian point estimation is supported by
 ### Conditional maximum likelihood estimation
 
 ```julia
-X = rand(0:1, 100, 10)
-rasch_fit = fit(RaschModel, X, CML())
+data = rand(0:1, 100, 10)
+rasch_fit = fit(RaschModel, data, CML())
 ```
 
 ### Bayesian estimation
@@ -67,26 +67,25 @@ Note that estimation with `Turing.InterenceAlgorithm` uses the
 interface and thus requires an additional argument to specify the number of iterations.
 
 ```julia
-X = rand(0:1, 100, 10)
-rasch_fit = fit(RaschModel, X, NUTS(), 1_000)
+data = rand(0:1, 100, 10)
+rasch_fit = fit(RaschModel, data, NUTS(), 1_000)
 ```
 
 You can also sample multiple chains in parallel.
 
 ```julia
-X = rand(0:1, 100, 10)
-rasch_fit = fit(RaschModel, X, NUTS(), MCMCThreads(), 1_000, 4)
+data = rand(0:1, 100, 10)
+rasch_fit = fit(RaschModel, data, NUTS(), MCMCThreads(), 1_000, 4)
 ```
 
 For bayesian point estimation you can just swap the inference algorithm to one of the supported
 point estimation algorithms.
 
 ```julia
-X = rand(0:1, 100, 10)
-rasch_fit = fit(RaschModel, X, MAP())
+data = rand(0:1, 100, 10)
+rasch_fit = fit(RaschModel, data, MAP())
 ```
 """
-# 0. user facing level
 function fit(
     modeltype::Type{<:AbstractRaschModel},
     data::AbstractMatrix,
@@ -183,10 +182,8 @@ function _fit_by_alg(
     itemresult = _fit_by_cml(modeltype, data, alg, args...; kwargs...)
     # estimate person parameters
     personresult = _fit_personpars(itemresult, alg_pp)
-    thetas_mapped = NamedArrays.NamedArray(
-        _maptheta(rs, personresult.values),
-        thetanames(P)
-    )
+    thetas_mapped =
+        NamedArrays.NamedArray(_maptheta(rs, personresult.values), thetanames(P))
 
     # combine parameter estimates
     values_combined = [itemresult.values; thetas_mapped]
