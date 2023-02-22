@@ -24,6 +24,12 @@ function getitempars(model::RaschModel{ET,DT,PT}, i) where {ET,DT,PT<:Statistica
     return getindex(betas, parname)
 end
 
+function getitempars(model::RaschModel{ET,DT,PT}, i) where {ET,DT,PT<:CombinedStatisticalModel}
+    parname = model.parnames_beta[i]
+    betas = coef(model.pars.itemresult)
+    return getindex(betas, parname)
+end
+
 """
     getpersonpars(model::RaschModel, p)
 
@@ -39,6 +45,12 @@ function getpersonpars(model::RaschModel{ET,DT,PT}, p) where {ET,DT,PT<:Statisti
     parname = Symbol("theta[", p, "]")
     thetas = coef(model.pars)
     return getindex(thetas, parname)
+end
+
+function getpersonpars(model::RaschModel{ET,DT,PT}, p) where {ET,DT,PT<:CombinedStatisticalModel}
+    parname = Symbol("theta[", p, "]")
+    betas = coef(model.pars.personresult)
+    return getindex(betas, parname)
 end
 
 """
