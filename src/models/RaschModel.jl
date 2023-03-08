@@ -1,4 +1,4 @@
-mutable struct RaschModel{ET<:EstimationType,DT<:AbstractMatrix,PT} <: AbstractRaschModel
+struct RaschModel{ET<:EstimationType,DT<:AbstractMatrix,PT} <: AbstractRaschModel
     data::DT
     pars::PT
     parnames_beta::Vector{Symbol}
@@ -24,7 +24,10 @@ function getitempars(model::RaschModel{ET,DT,PT}, i) where {ET,DT,PT<:Statistica
     return getindex(betas, parname)
 end
 
-function getitempars(model::RaschModel{ET,DT,PT}, i) where {ET,DT,PT<:CombinedStatisticalModel}
+function getitempars(
+    model::RaschModel{ET,DT,PT},
+    i,
+) where {ET,DT,PT<:CombinedStatisticalModel}
     parname = model.parnames_beta[i]
     betas = coef(model.pars.itemresult)
     return getindex(betas, parname)
@@ -47,7 +50,10 @@ function getpersonpars(model::RaschModel{ET,DT,PT}, p) where {ET,DT,PT<:Statisti
     return getindex(thetas, parname)
 end
 
-function getpersonpars(model::RaschModel{ET,DT,PT}, p) where {ET,DT,PT<:CombinedStatisticalModel}
+function getpersonpars(
+    model::RaschModel{ET,DT,PT},
+    p,
+) where {ET,DT,PT<:CombinedStatisticalModel}
     parname = Symbol("theta[", p, "]")
     betas = coef(model.pars.personresult)
     return getindex(betas, parname)
