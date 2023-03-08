@@ -178,7 +178,9 @@ function expected_score(
     score = zeros(Float64, niter)
 
     for i in is
-        add_irf!(model, score, theta, i, 1; scoring_function)
+        for y in 0:1
+            add_irf!(model, score, theta, i, y; scoring_function)
+        end
     end
 
     return score
@@ -192,7 +194,9 @@ function expected_score(
 ) where {F}
     score = zero(Float64)
     for i in is
-        score += irf(model, theta, i, 1) * scoring_function(1)
+        for y in 0:1
+            score += irf(model, theta, i, y) * scoring_function(y)
+        end
     end
     return score
 end
