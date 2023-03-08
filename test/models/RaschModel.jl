@@ -75,6 +75,12 @@
               irf(model_mle, 0.0, 1) * 2
         @test expected_score(model_mle, 0.0, 1:2, scoring_function = x -> 2x) ==
               irf(model_mle, 0.0, 1) * 2 + irf(model_mle, 0.0, 2) * 2
+
+        # https://github.com/JuliaPsychometrics/RaschModels.jl/issues/43
+        @test expected_score(model_mcmc, 0.0, 1, scoring_function = x -> 1 - x) ==
+              irf(model_mcmc, 0.0, 1, 0)
+        @test expected_score(model_mle, 0.0, 1, scoring_function = x -> 1 - x) ==
+              irf(model_mle, 0.0, 1, 0)
     end
 
     @testset "information" begin

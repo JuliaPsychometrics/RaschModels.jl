@@ -1,4 +1,4 @@
-mutable struct RaschModel{ET<:EstimationType,DT<:AbstractMatrix,PT} <: AbstractRaschModel
+struct RaschModel{ET<:EstimationType,DT<:AbstractMatrix,PT} <: AbstractRaschModel
     data::DT
     pars::PT
     parnames_beta::Vector{Symbol}
@@ -24,7 +24,10 @@ function getitempars(model::RaschModel{ET,DT,PT}, i) where {ET,DT,PT<:Statistica
     return getindex(betas, parname)
 end
 
-function getitempars(model::RaschModel{ET,DT,PT}, i) where {ET,DT,PT<:CombinedStatisticalModel}
+function getitempars(
+    model::RaschModel{ET,DT,PT},
+    i,
+) where {ET,DT,PT<:CombinedStatisticalModel}
     parname = model.parnames_beta[i]
     betas = coef(model.pars.itemresult)
     return getindex(betas, parname)
@@ -47,7 +50,10 @@ function getpersonpars(model::RaschModel{ET,DT,PT}, p) where {ET,DT,PT<:Statisti
     return getindex(thetas, parname)
 end
 
-function getpersonpars(model::RaschModel{ET,DT,PT}, p) where {ET,DT,PT<:CombinedStatisticalModel}
+function getpersonpars(
+    model::RaschModel{ET,DT,PT},
+    p,
+) where {ET,DT,PT<:CombinedStatisticalModel}
     parname = Symbol("theta[", p, "]")
     betas = coef(model.pars.personresult)
     return getindex(betas, parname)
@@ -172,7 +178,9 @@ function expected_score(
     score = zeros(Float64, niter)
 
     for i in is
-        add_irf!(model, score, theta, i, 1; scoring_function)
+        for y in 0:1
+            add_irf!(model, score, theta, i, y; scoring_function)
+        end
     end
 
     return score
@@ -186,7 +194,9 @@ function expected_score(
 ) where {F}
     score = zero(Float64)
     for i in is
-        score += irf(model, theta, i, 1) * scoring_function(1)
+        for y in 0:1
+            score += irf(model, theta, i, y) * scoring_function(y)
+        end
     end
     return score
 end
