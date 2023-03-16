@@ -9,6 +9,42 @@ response_type(::Type{<:PolytomousRaschModel}) = AbstractItemResponseModels.Ordin
 estimation_type(::Type{<:PolytomousRaschModel{ET,PT}}) where {ET,PT} = ET
 
 """
+    getitemlocations(model::PolytomousRaschModel, i, y)
+
+Fetch item parameters from a fitted `model`.
+"""
+function getitemlocations(model::PolytomousRaschModel, i, y)
+    difficulty = getitemdifficulty(model, i)
+    if y == 1
+        return difficulty
+    else
+        thresholds = getthresholds(model, i, y)
+        return difficulty + thresholds
+    end
+end
+
+"""
+    getpersonlocations(model::PolytomousRaschModel, p)
+
+Fetch the person parameters of `model` for person `p`.
+"""
+function getpersonlocations(model::PolytomousRaschModel{SamplingEstimate}, p)
+    parname = Symbol("theta[", p, "]")
+    thetas = model.pars.value[var = parname]
+    return vec(thetas)
+end
+
+function getpersonlocations(
+    model::PolytomousRaschModel{ET,PT},
+    p,
+) where {ET,PT<:StatisticalModel}
+    parname = Symbol("theta[", p, "]")
+    thetas = coef(model.pars)
+    return getindex(thetas, parname)
+end
+
+
+"""
     getitempars(model::PolytomousRaschModel, i)
 
 Fetch item parameters from a fitted model.
@@ -21,6 +57,21 @@ function getitempars(model::PolytomousRaschModel, i)
     beta = _get_item_parameter(model, i)
     tau = _get_item_thresholds(model, i)
     return (; beta, tau)
+end
+
+function getitemdifficulty(model::PolytomousRaschModel{SamplingEstimate}, i)
+    parname = model.parnames_beta[i]
+    difficulty = vec(view(model.pars.value, var = parname))
+    return difficulty
+end
+
+function getitemdifficulty(
+    model::PolytomousRaschModel{ET,PT},
+    i,
+) where {ET,PT<:StatisticalModel}
+    parname = model.parnames_beta[i]
+    difficulty = model.pars.values[parname]
+    return difficulty
 end
 
 # MCMCChains

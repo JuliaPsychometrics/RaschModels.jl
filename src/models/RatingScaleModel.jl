@@ -11,6 +11,31 @@ struct RatingScaleModel{ET<:EstimationType,DT<:AbstractMatrix,PT} <:
     parnames_tau::Vector{Symbol}
 end
 
+function getthresholds(model::RatingScaleModel{SamplingEstimate}, i, y)
+    if y == 1
+        nsamples, _, nchains = size(model.pars)
+        return zeros(nsamples * nchains)
+    end
+
+    parname = model.parnames_tau[y-1]
+    thresholds = vec(view(model.pars.value, var = parname))
+    return thresholds
+end
+
+function getthresholds(
+    model::RatingScaleModel{ET,DT,PT},
+    i,
+    y,
+) where {ET,DT,PT<:StatisticalModel}
+    if y == 1
+        return 0.0
+    else
+        parname = model.parnames_tau[y-1]
+        threshold = model.pars.values[parname]
+        return threshold
+    end
+end
+
 function _get_item_thresholds(model::RatingScaleModel{ET,DT,PT}, i) where {ET,DT,PT<:Chains}
     threshold_names = model.parnames_tau
     thresholds = view(model.pars.value, var = threshold_names)
