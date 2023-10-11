@@ -18,11 +18,12 @@
               [Symbol("beta[1]"), Symbol("beta[2]"), Symbol("beta[3]")]
     end
 
-    @testset "getitempars" begin
-        @test RaschModels.getitempars(model_mcmc, 1) isa AbstractVector{<:AbstractFloat}
-        @test length(RaschModels.getitempars(model_mcmc, 1)) == 100
-        @test RaschModels.getitempars(model_mle, 1) isa AbstractFloat
-        @test RaschModels.getitempars(model_cml, 1) isa AbstractFloat
+    @testset "getitemlocations" begin
+        @test RaschModels.getitemlocations(model_mcmc, 1) isa
+              AbstractVector{<:AbstractFloat}
+        @test length(RaschModels.getitemlocations(model_mcmc, 1)) == 100
+        @test RaschModels.getitemlocations(model_mle, 1) isa AbstractFloat
+        @test RaschModels.getitemlocations(model_cml, 1) isa AbstractFloat
     end
 
     @testset "irf" begin
@@ -95,14 +96,14 @@
             RaschModels._iif.(
                 RaschModel,
                 0.0,
-                RaschModels.getitempars(model_mcmc, 1),
+                RaschModels.getitemlocations(model_mcmc, 1),
                 scoring_function = x -> 2x,
             )
         info_2 =
             RaschModels._iif.(
                 RaschModel,
                 0.0,
-                RaschModels.getitempars(model_mcmc, 2),
+                RaschModels.getitemlocations(model_mcmc, 2),
                 scoring_function = x -> 2x,
             )
 
@@ -120,13 +121,13 @@
         info_1 = RaschModels._iif(
             RaschModel,
             0.0,
-            RaschModels.getitempars(model_mle, 1),
+            RaschModels.getitemlocations(model_mle, 1),
             scoring_function = x -> 2x,
         )
         info_2 = RaschModels._iif(
             RaschModel,
             0.0,
-            RaschModels.getitempars(model_mle, 2),
+            RaschModels.getitemlocations(model_mle, 2),
             scoring_function = x -> 2x,
         )
 

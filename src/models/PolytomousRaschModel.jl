@@ -9,55 +9,87 @@ response_type(::Type{<:PolytomousRaschModel}) = AbstractItemResponseModels.Ordin
 estimation_type(::Type{<:PolytomousRaschModel{ET,PT}}) where {ET,PT} = ET
 
 """
-    getitempars(model::PolytomousRaschModel, i)
-
-Fetch item parameters from a fitted model.
-
-## Return value
-For polytomous Rasch Models a tuple with item parameters `beta` and threshold parameteres `tau`
-is returned.
-"""
-function getitempars(model::PolytomousRaschModel, i)
-    beta = _get_item_parameter(model, i)
-    tau = _get_item_thresholds(model, i)
-    return (; beta, tau)
-end
-
-# MCMCChains
-function _get_item_parameter(model::PolytomousRaschModel{ET,PT}, i) where {ET,PT<:Chains}
-    parname = model.parnames_beta[i]
-    betas = vec(view(model.pars.value, var = parname))
-    return betas
-end
-
-# StatisticalModel
-function _get_item_parameter(
-    model::PolytomousRaschModel{ET,PT},
-    i,
-) where {ET,PT<:StatisticalModel}
-    parname = model.parnames_beta[i]
-    pars = coef(model.pars)
-    return getindex(pars, parname)
-end
-
-"""
-    getpersonpars(model::PolytomousRaschModel, p)
+    getpersonlocations(model::PolytomousRaschModel, p)
 
 Fetch the person parameters of `model` for person `p`.
 """
-function getpersonpars(model::PolytomousRaschModel{ET,PT}, p) where {ET,PT<:Chains}
+function getpersonlocations(model::PolytomousRaschModel{SamplingEstimate}, p)
     parname = Symbol("theta[", p, "]")
     thetas = model.pars.value[var = parname]
     return vec(thetas)
 end
 
-function getpersonpars(
+function getpersonlocations(
     model::PolytomousRaschModel{ET,PT},
     p,
 ) where {ET,PT<:StatisticalModel}
     parname = Symbol("theta[", p, "]")
     thetas = coef(model.pars)
     return getindex(thetas, parname)
+end
+
+"""
+    getitemlocations(model::PolytomousRaschModel, i, y)
+
+Fetch item parameters from a fitted `model`.
+"""
+function getitemlocations(model::PolytomousRaschModel, i, y)
+    difficulty = getitemdifficulty(model, i)
+    if y == 1
+        return difficulty
+    else
+        thresholds = getthresholds(model, i, y - 1)
+        return difficulty + thresholds
+    end
+end
+
+function getitemdifficulty(model::PolytomousRaschModel{SamplingEstimate}, i)
+    parname = model.parnames_beta[i]
+    difficulty = vec(view(model.pars.value, var = parname))
+    return difficulty
+end
+
+function getitemdifficulty(
+    model::PolytomousRaschModel{ET,PT},
+    i,
+) where {ET,PT<:StatisticalModel}
+    parname = model.parnames_beta[i]
+    difficulty = model.pars.values[parname]
+    return difficulty
+end
+
+function getthresholds(model::PolytomousRaschModel{SamplingEstimate}, i, c)
+    parname = getthresholdnames(model, i, c)
+    thresholds = vec(view(model.pars.value, var = parname))
+    return thresholds
+end
+
+function getthresholds(model::PolytomousRaschModel{SamplingEstimate}, i)
+    threshold_names = getthresholdnames(model, i)
+    thresholds = view(model.pars.value, var = threshold_names)
+    n_iter, n_pars, n_chains = size(thresholds)
+    thresholds_permuted = permutedims(thresholds, (1, 3, 2))
+    threshold_mat = Matrix(reshape(thresholds_permuted, n_iter * n_chains, n_pars))
+    return threshold_mat
+end
+
+function getthresholds(
+    model::PolytomousRaschModel{ET,PT},
+    i,
+    c,
+) where {ET,PT<:StatisticalModel}
+    parname = getthresholdnames(model, i, c)
+    threshold = model.pars.values[parname]
+    return threshold
+end
+
+function getthresholds(
+    model::PolytomousRaschModel{ET,PT},
+    i,
+) where {ET,PT<:StatisticalModel}
+    threshold_names = getthresholdnames(model, i)
+    thresholds = vec(view(model.pars.values, threshold_names))
+    return thresholds
 end
 
 """
@@ -71,11 +103,13 @@ If the response value `y` is omitted, the item response probabilities for each c
 returned. To calculate expected scores for an item, see [`expected_score`](@ref).
 """
 function irf(model::PolytomousRaschModel{SamplingEstimate}, theta, i)
-    beta, thresholds = getitempars(model, i)
+    beta = getitemdifficulty(model, i)
+    thresholds = getthresholds(model, i)
+
     n_samples, n_thresholds = size(thresholds)
 
     probs = similar(thresholds, n_samples, n_thresholds + 1)
-    extended = zeros(Float64, n_thresholds + 1)
+    extended = zeros(eltype(probs), n_thresholds + 1)
 
     eta = @. theta - (beta + thresholds)
 
@@ -93,9 +127,14 @@ function irf(model::PolytomousRaschModel{SamplingEstimate}, theta, i, y)
 end
 
 function irf(model::PolytomousRaschModel{PointEstimate}, theta, i)
-    beta, thresholds = getitempars(model, i)
-    extended = zeros(Float64, length(thresholds) + 1)
+    beta = getitemdifficulty(model, i)
+    thresholds = getthresholds(model, i)
+
+    n_thresholds = length(thresholds)
+    extended = zeros(eltype(thresholds), n_thresholds + 1)
+
     eta = @. theta - (beta + thresholds)
+
     probs = _irf(PolytomousRaschModel, extended, eta)
     return probs
 end
