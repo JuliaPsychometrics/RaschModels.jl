@@ -11,24 +11,7 @@ struct RatingScaleModel{ET<:EstimationType,DT<:AbstractMatrix,PT} <:
     parnames_tau::Vector{Symbol}
 end
 
-function _get_item_thresholds(model::RatingScaleModel{ET,DT,PT}, i) where {ET,DT,PT<:Chains}
-    threshold_names = model.parnames_tau
-    thresholds = view(model.pars.value, var = threshold_names)
-    n_iter, n_pars, n_chains = size(thresholds)
-    thresholds_permuted = permutedims(thresholds, (1, 3, 2))
-    threshold_mat = Matrix(reshape(thresholds_permuted, n_iter * n_chains, n_pars))
-    return threshold_mat
-end
-
-function _get_item_thresholds(
-    model::RatingScaleModel{ET,DT,PT},
-    i,
-) where {ET,DT,PT<:StatisticalModel}
-    pars = coef(model.pars)
-    threshold_index = getindex.(pars.dicts, model.parnames_tau)
-    thresholds = view(pars.array, threshold_index)
-    return vec(thresholds)
-end
+getthresholdnames(model::RatingScaleModel, i, c = :) = getindex(model.parnames_tau, c)
 
 function _turing_model(::Type{RatingScaleModel}; priors)
     @model function rating_scale_model(

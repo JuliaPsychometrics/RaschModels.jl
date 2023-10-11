@@ -11,26 +11,8 @@ struct PartialCreditModel{ET<:EstimationType,DT<:AbstractMatrix,PT} <:
     parnames_tau::Vector{Vector{Symbol}}
 end
 
-function _get_item_thresholds(
-    model::PartialCreditModel{ET,DT,PT},
-    i,
-)::Matrix{Float64} where {ET,DT,PT<:Chains}
-    parnames = string.(namesingroup(model.pars, :tau))
-    threshold_names = Symbol.(filter(x -> occursin("tau[$i]", x), parnames))
-    thresholds = Array(model.pars[threshold_names])
-    return thresholds
-end
-
-function _get_item_thresholds(
-    model::PartialCreditModel{ET,DT,PT},
-    i,
-) where {ET,DT,PT<:StatisticalModel}
-    parnames = string.(params(model.pars))
-    pars = coef(model.pars)
-    threshold_names = filter(x -> occursin("tau[$i]", x), parnames)
-    thresholds = getindex(pars, Symbol.(threshold_names))
-    return vec(thresholds)
-end
+getthresholdnames(model::PartialCreditModel, i) = model.parnames_tau[i]
+getthresholdnames(model::PartialCreditModel, i, c) = model.parnames_tau[i][c]
 
 function _turing_model(::Type{PartialCreditModel}; priors)
     @model function partial_credit_model(
