@@ -16,46 +16,54 @@ response_type(::Type{<:RaschModel}) = AbstractItemResponseModels.Dichotomous
 estimation_type(::Type{<:RaschModel{ET,DT,PT}}) where {ET,DT,PT} = ET
 
 """
-    getitempars(model::RaschModel, i)
+    getitemlocations(model::RaschModel, i)
 
-Fetch the item parameters of `model` for item `i`.
+Fetch the item difficulty parameter of `model` for item `i`.
 """
-function getitempars(model::RaschModel{ET,DT,PT}, i) where {ET,DT,PT<:Chains}
-    parname = model.parnames_beta[i]
-    betas = vec(view(model.pars.value, var = parname))
-    return betas
-end
-
-function getitempars(model::RaschModel{ET,DT,PT}, i) where {ET,DT,PT<:StatisticalModel}
+function getitemlocations(
+    model::RaschModel{PointEstimate,DT,PT},
+    i,
+    y = nothing,
+) where {DT,PT<:StatisticalModel}
     parname = model.parnames_beta[i]
     betas = coef(model.pars)
     return getindex(betas, parname)
 end
 
-function getitempars(
-    model::RaschModel{ET,DT,PT},
+function getitemlocations(
+    model::RaschModel{PointEstimate,DT,PT},
     i,
-) where {ET,DT,PT<:CombinedStatisticalModel}
+    y = nothing,
+) where {DT,PT<:CombinedStatisticalModel}
     parname = model.parnames_beta[i]
     betas = coef(model.pars.itemresult)
     return getindex(betas, parname)
 end
 
-"""
-    getpersonpars(model::RaschModel, p)
-
-Fetch the person parameters of `model` for person `p`.
-"""
-function getpersonpars(model::RaschModel{ET,DT,PT}, p) where {ET,DT,PT<:Chains}
-    parname = Symbol("theta[", p, "]")
-    thetas = vec(view(model.pars.value, var = parname))
-    return thetas
+function getitemlocations(model::RaschModel{SamplingEstimate}, i, y = nothing)
+    parname = model.parnames_beta[i]
+    betas = vec(view(model.pars.value, var = parname))
+    return betas
 end
 
-function getpersonpars(model::RaschModel{ET,DT,PT}, p) where {ET,DT,PT<:StatisticalModel}
+"""
+    getpersonlocations(model::RaschModel, p)
+
+Fetch the person ability parameter of `model` for person `p`.
+"""
+function getpersonlocations(
+    model::RaschModel{PointEstimate,DT,PT},
+    p,
+) where {DT,PT<:StatisticalModel}
     parname = Symbol("theta[", p, "]")
     thetas = coef(model.pars)
     return getindex(thetas, parname)
+end
+
+function getpersonlocations(model::RaschModel{SamplingEstimate}, p)
+    parname = Symbol("theta[", p, "]")
+    thetas = vec(view(model.pars.value, var = parname))
+    return thetas
 end
 
 @doc raw"""
@@ -89,7 +97,7 @@ julia> irf(rasch, 0.0, 1);
 ```
 """
 function irf(model::RaschModel{SamplingEstimate}, theta, i, y = 1)
-    n_iter = length(getitempars(model, i))
+    n_iter = length(getitemlocations(model, i))
     probs = zeros(Float64, n_iter)
     add_irf!(model, probs, theta, i, y, scoring_function = one)
     return probs
@@ -97,7 +105,7 @@ end
 
 function irf(model::RaschModel{PointEstimate}, theta, i, y = 1)
     checkresponsetype(response_type(model), y)
-    beta = getitempars(model, i)
+    beta = getitemlocations(model, i)
     return _irf(RaschModel, theta, beta, y)
 end
 
@@ -110,7 +118,7 @@ function add_irf!(
     scoring_function::F = identity,
 ) where {F}
     checkresponsetype(response_type(model), y)
-    beta = getitempars(model, i)
+    beta = getitemlocations(model, i)
 
     for j in eachindex(beta)
         probs[j] += _irf(RaschModel, theta, beta[j], y) * scoring_function(y)
@@ -155,7 +163,7 @@ julia> iif(rasch, 0.0, 1);
 ```
 """
 function iif(model::RaschModel{SamplingEstimate}, theta, i, y = 1)
-    n_iter = length(getitempars(model, i))
+    n_iter = length(getitemlocations(model, i))
     info = zeros(Float64, n_iter)
     add_iif!(model, info, theta, i, y)
     return info
@@ -163,7 +171,7 @@ end
 
 function iif(model::RaschModel{PointEstimate}, theta, i, y = 1)
     checkresponsetype(response_type(model), y)
-    beta = getitempars(model, i)
+    beta = getitemlocations(model, i)
     return _iif(RaschModel, theta, beta)
 end
 
@@ -176,7 +184,7 @@ function add_iif!(
     scoring_function::F = identity,
 ) where {F}
     checkresponsetype(response_type(model), y)
-    beta = getitempars(model, i)
+    beta = getitemlocations(model, i)
 
     for j in eachindex(beta)
         info[j] += _iif(RaschModel, theta, beta[j]; scoring_function)
@@ -382,7 +390,7 @@ function information(
 ) where {F}
     info = zero(Float64)
     for i in is
-        beta = getitempars(model, i)
+        beta = getitemlocations(model, i)
         info += _iif(RaschModel, theta, beta; scoring_function)
     end
     return info

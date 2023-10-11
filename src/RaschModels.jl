@@ -27,7 +27,8 @@ import AbstractItemResponseModels:
     response_type, person_dimensionality, item_dimensionality, estimation_type
 
 @reexport begin
-    import AbstractItemResponseModels: irf, iif, expected_score, information, fit
+    import AbstractItemResponseModels:
+        irf, iif, expected_score, information, fit, getitemlocations, getpersonlocations
 end
 
 @reexport begin
