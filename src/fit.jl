@@ -1,4 +1,4 @@
-struct CombinedCMLResult{V<:NamedArrays.NamedArray}
+struct CombinedCMLResult{V<:NamedArrays.NamedArray} <: CombinedStatisticalModel
     "modeltype"
     modeltype::Type{<:AbstractRaschModel}
     "combined point estimates/coefs"

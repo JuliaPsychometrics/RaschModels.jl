@@ -2,6 +2,7 @@
     X = rand(0:1, 10, 3)
     model_mcmc = fit(RaschModel, X, MH(), 100)
     model_mle = fit(RaschModel, X, MLE())
+    model_cml = fit(RaschModel, X, CML())
 
     @testset "Model construction" begin
         @test estimation_type(model_mcmc) == SamplingEstimate
@@ -11,6 +12,17 @@
         @test estimation_type(model_mle) == PointEstimate
         @test model_mle.parnames_beta ==
               [Symbol("beta[1]"), Symbol("beta[2]"), Symbol("beta[3]")]
+
+        @test estimation_type(model_cml) == PointEstimate
+        @test model_cml.parnames_beta ==
+              [Symbol("beta[1]"), Symbol("beta[2]"), Symbol("beta[3]")]
+    end
+
+    @testset "getitempars" begin
+        @test RaschModels.getitempars(model_mcmc, 1) isa AbstractVector{<:AbstractFloat}
+        @test length(RaschModels.getitempars(model_mcmc, 1)) == 100
+        @test RaschModels.getitempars(model_mle, 1) isa AbstractFloat
+        @test RaschModels.getitempars(model_cml, 1) isa AbstractFloat
     end
 
     @testset "irf" begin
@@ -63,6 +75,12 @@
               irf(model_mle, 0.0, 1) * 2
         @test expected_score(model_mle, 0.0, 1:2, scoring_function = x -> 2x) ==
               irf(model_mle, 0.0, 1) * 2 + irf(model_mle, 0.0, 2) * 2
+
+        # https://github.com/JuliaPsychometrics/RaschModels.jl/issues/43
+        @test expected_score(model_mcmc, 0.0, 1, scoring_function = x -> 1 - x) ==
+              irf(model_mcmc, 0.0, 1, 0)
+        @test expected_score(model_mle, 0.0, 1, scoring_function = x -> 1 - x) ==
+              irf(model_mle, 0.0, 1, 0)
     end
 
     @testset "information" begin

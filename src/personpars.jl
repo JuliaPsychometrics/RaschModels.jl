@@ -26,7 +26,7 @@ rational_bounds(::PersonParameterMLE) = false
 
 A wrapper struct to store various results from a person parameter estimation.
 """
-struct PersonParameterResult{PPA<:PersonParameterAlgorithm}
+struct PersonParameterResult{PPA<:PersonParameterAlgorithm} <: StatisticalModel
     "modeltype"
     modeltype::Type{<:AbstractRaschModel}
     "point estimates/coefs"
