@@ -30,7 +30,7 @@ ReverseDiff = "1"
 Roots = "2"
 StatsAPI = "1"
 StatsBase = "0.34"
-Turing = "0.26"
+Turing = "0.27"
 julia = "1.8"
 
 [extras]
