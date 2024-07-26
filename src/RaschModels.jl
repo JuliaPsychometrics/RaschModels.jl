@@ -11,6 +11,9 @@ using Turing
 using NamedArrays
 using LinearAlgebra
 
+import ItemResponseFunctions
+using ItemResponseFunctions: irf, iif, information, expected_score, ItemParameters
+
 import LinearAlgebra: I
 import StatsAPI:
     StatisticalModel,
@@ -47,11 +50,8 @@ include("utils.jl")
 include("types.jl")
 include("priors.jl")
 include("missings.jl")
+include("models/models.jl")
 
-include("models/RaschModel.jl")
-include("models/PolytomousRaschModel.jl")
-include("models/PartialCreditModel.jl")
-include("models/RatingScaleModel.jl")
 
 include("turing_model.jl")
 

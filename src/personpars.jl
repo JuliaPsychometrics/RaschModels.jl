@@ -37,19 +37,27 @@ struct PersonParameterResult{PPA<:PersonParameterAlgorithm} <: StatisticalModel
     alg::PPA
 end
 
-function _fit_personpars(cmlresult::CMLResult, alg::PPA) where {PPA<:PersonParameterAlgorithm}
+function _fit_personpars(
+    cmlresult::CMLResult,
+    alg::PPA,
+) where {PPA<:PersonParameterAlgorithm}
     (; modeltype, values) = cmlresult
-    return _fit_personpars(modeltype, values, alg) 
+    return _fit_personpars(modeltype, values, alg)
 end
 
-function _fit_personpars(modeltype::Type{RaschModel}, betas::AbstractVector{T}, alg::PPA; I = length(betas)) where {T<:AbstractFloat, PPA<:PersonParameterAlgorithm}
+function _fit_personpars(
+    modeltype::Type{RaschModel},
+    betas::AbstractVector{T},
+    alg::PPA;
+    I = length(betas),
+) where {T<:AbstractFloat,PPA<:PersonParameterAlgorithm}
     personpars = zeros(T, I + 1)
     se = zeros(T, I + 1)
     init_x = zero(T)
 
     for r in eachindex(personpars)
-        # if estimation of rational bounds is not possible 
-        if (r == 1 || r == I+1) && !rational_bounds(alg)
+        # if estimation of rational bounds is not possible
+        if (r == 1 || r == I + 1) && !rational_bounds(alg)
             personpars[r] += NaN
             se[r] += NaN
             continue
@@ -66,14 +74,14 @@ function optfun(
     modeltype::Type{RaschModel},
     theta::T,
     betas::AbstractVector{T},
-    r::Int
+    r::Int,
 ) where {T<:AbstractFloat}
     sum_prop = zero(T)
     info = zero(T)
     sum_deriv = zero(T)
 
     for beta in betas
-        prop_i = _irf(modeltype, theta, beta, 1)
+        prop_i = irf(ItemResponseFunctions.OnePL, theta, beta, 1)
         sum_prop += prop_i
 
         info_i = (1 - prop_i) * prop_i
@@ -90,11 +98,11 @@ function optfun(
     modeltype::Type{RaschModel},
     theta::T,
     betas::AbstractVector{T},
-    r::Int
+    r::Int,
 ) where {T<:AbstractFloat}
     optvalue = zero(T)
-    for beta in betas 
-        optvalue += _irf(modeltype, theta, beta, 1)
+    for beta in betas
+        optvalue += irf(ItemResponseFunctions.OnePL, theta, beta, 1)
     end
     return (r - 1) - optvalue
 end
@@ -105,7 +113,7 @@ function var(
     theta::T,
     betas::AbstractVector{T},
 ) where {T<:AbstractFloat}
-    # variance equal (asymptotically) to variance of MLE (Warm, 1989) 
+    # variance equal (asymptotically) to variance of MLE (Warm, 1989)
     return var(PersonParameterMLE(), modeltype, theta, betas)
 end
 
@@ -118,19 +126,19 @@ function var(
     info = zero(T)
 
     for beta in betas
-        info += _iif(modeltype, theta, beta)
+        info += information(ItemResponseFunctions.OnePL, theta, beta)
     end
 
     return 1 / info
 end
 
 function _maptheta(rs::AbstractVector{Int}, thetas::AbstractVector{T}) where {T}
-    personpars = Vector{T}(undef, length(rs))   
+    personpars = Vector{T}(undef, length(rs))
     for (i, v) in enumerate(rs)
         if isnothing(thetas[v+1])
             personpars[i] = nothing
         end
-        personpars[i] = thetas[v+1] 
+        personpars[i] = thetas[v+1]
     end
     return personpars
 end
