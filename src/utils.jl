@@ -1,4 +1,3 @@
-UN{T} = Union{T,Nothing}
 isresponse(x) = !ismissing(x)
 
 """
@@ -109,9 +108,9 @@ function getrowsums(data; P = size(data, 1), I = size(data, 2))
         for i in 1:I
             response = data[p, i]
             if isresponse(response)
-                rs[p] += response    
+                rs[p] += response
             end
-        end 
+        end
     end
 
     return rs
@@ -123,10 +122,10 @@ function getcolsums(data; P = size(data, 1), I = size(data, 2))
     for i in eachindex(cs)
         for p in 1:P
             response = data[p, i]
-            if isresponse(response) 
-                cs[i] += response    
+            if isresponse(response)
+                cs[i] += response
             end
-        end 
+        end
     end
 
     return cs

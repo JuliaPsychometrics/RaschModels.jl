@@ -36,16 +36,16 @@ function ResponsePatterns(
 end
 
 """
-    checkpatterns(data::AbstractMatrix; response_ind{<:Integer} = isresponse(data))
+    $(SIGNATURES)
 
 relevant check for conditional maximum likelihood estimation if response matrix `data` contains
     - items with only missing responses
     - subjects with less than two responses
 """
 function checkpatterns(
-    data::AbstractMatrix;
-    response_ind::AbstractMatrix{T} = isresponse.(data),
-) where {T<:Integer}
+    data::AbstractMatrix,
+    response_ind::AbstractMatrix = isresponse.(data),
+)
     n_responses_col = sum(response_ind, dims = 1)
     n_responses_row = sum(response_ind, dims = 2)
 
