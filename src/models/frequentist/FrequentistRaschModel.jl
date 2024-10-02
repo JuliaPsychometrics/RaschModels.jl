@@ -1,5 +1,5 @@
 struct FrequentistRaschModel{T<:AbstractMatrix,U<:AbstractDimArray,V} <:
-       AbstractRaschModel{PointEstimate}
+       RaschModel{PointEstimate}
     "the original response data matrix"
     data::T
     "raw estimates"

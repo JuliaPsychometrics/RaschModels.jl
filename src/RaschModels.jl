@@ -82,6 +82,7 @@ using Optim: MultivariateOptimizationResults, optimize, BFGS
 using PersonParameters: PersonParameterAlgorithm, person_parameters
 using Reexport: @reexport
 using Turing: @model, @addlogprob!, condition, sample, filldist, logpdf, BernoulliLogit
+using Turing.Inference: InferenceAlgorithm
 import ReverseDiff
 
 import Optim: optimize
@@ -111,22 +112,13 @@ import StatsAPI:
 
 @reexport using PersonParameters: WLE, MLE, MAP, EAP
 
-@reexport using Turing:
-    MH,
-    HMC,
-    NUTS,
-    MCMCSerial,
-    MCMCThreads,
-    MCMCDistributed,
-    AutoForwardDiff,
-    AutoReverseDiff
+@reexport using Turing: NUTS, MCMCThreads, MCMCDistributed, AutoReverseDiff
 
 export Prior,
     AbstractRaschModel,
-    BayesianRaschModel,
-    BayesianRatingScaleModel,
-    BayesianPartialCreditModel,
-    FrequentistRaschModel,
+    RaschModel,
+    PartialCreditModel,
+    RatingScaleModel,
     CML,
     SummationAlgorithm
 

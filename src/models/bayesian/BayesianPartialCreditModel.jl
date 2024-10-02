@@ -12,7 +12,7 @@ struct BayesianPartialCreditModel{
     V<:Chains,
     W<:AbstractDimArray,
     X<:AbstractDimArray,
-} <: AbstractRaschModel{SamplingEstimate}
+} <: PartialCreditModel{SamplingEstimate}
     "the original response data matrix"
     data::T
     "The prior distributions used for fitting the model"

@@ -35,27 +35,42 @@ function ResponsePatterns(
     return ResponsePatterns(list_patterns, pattern_idx, length(unique_patterns))
 end
 
-"""
-    $(SIGNATURES)
-
-relevant check for conditional maximum likelihood estimation if response matrix `data` contains
-    - items with only missing responses
-    - subjects with less than two responses
-"""
-function checkpatterns(
-    data::AbstractMatrix,
-    response_ind::AbstractMatrix = isresponse.(data),
-)
-    n_responses_col = sum(response_ind, dims = 1)
-    n_responses_row = sum(response_ind, dims = 2)
-
-    if any(n -> n == 0, n_responses_col)
-        throw(DomainError("Items with only missing responses are not permitted."))
+function check_response_patterns(data::AbstractMatrix)
+    if any_missing_patterns(data)
+        err = "Items with only missing responses are not permitted"
+        throw(DomainError(err))
     end
 
-    if any(n -> n < 2, n_responses_row)
-        throw(DomainError("Only subjects with at least two non-missing responses allowed."))
+    if any_subject_responses_less_than(data, 2)
+        err = "Only subjects with at least two nonmissing responses are permitted"
+        throw(DomainError(err))
     end
 
     return nothing
+end
+
+"""
+    $(SIGNATURES)
+
+Check if any column of the matrix `data` has all missing values.
+"""
+function any_missing_patterns(data::AbstractMatrix)
+    for col in eachcol(data)
+        all(ismissing, col) && return true
+    end
+
+    return false
+end
+
+"""
+    $(SIGNATURES)
+
+Check if any row of the matrix `data` has less than `n` nonmissing values.
+"""
+function any_subject_responses_less_than(data::AbstractMatrix, n)
+    for row in eachrow(data)
+        sum(!ismissing, row) < n && return true
+    end
+
+    return false
 end

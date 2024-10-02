@@ -49,8 +49,3 @@ function information(
 end
 
 include("FrequentistRaschModel.jl")
-
-# include("RaschModel.jl")
-# include("PolytomousRaschModel.jl")
-# include("PartialCreditModel.jl")
-# include("RatingScaleModel.jl")

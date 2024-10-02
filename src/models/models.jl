@@ -15,6 +15,10 @@ estimation_type(::Type{<:AbstractRaschModel{T}}) where {T} = T
 person_dimensionality(::Type{<:AbstractRaschModel}) = AbstractItemResponseModels.Univariate
 item_dimensionality(::Type{<:AbstractRaschModel}) = AbstractItemResponseModels.Univariate
 
+abstract type RaschModel{T} <: AbstractRaschModel{T} end
+abstract type PartialCreditModel{T} <: AbstractRaschModel{T} end
+abstract type RatingScaleModel{T} <: AbstractRaschModel{T} end
+
 """
     $(SIGNATURES)
 

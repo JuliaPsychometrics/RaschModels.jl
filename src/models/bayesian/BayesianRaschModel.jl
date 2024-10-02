@@ -12,7 +12,7 @@ struct BayesianRaschModel{
     V<:Chains,
     W<:AbstractDimArray,
     X<:AbstractDimArray,
-} <: AbstractRaschModel{SamplingEstimate}
+} <: RaschModel{SamplingEstimate}
     "the original response data matrix"
     data::T
     "The prior distributions used for fitting the model"

@@ -64,7 +64,7 @@ function optimize(M::Type{FrequentistRaschModel}, data::AbstractMatrix, alg::CML
     response_ind = isresponse.(data)
 
     checkcondition(data, response_ind)
-    checkpatterns(data, response_ind)
+    check_response_patterns(data)
 
     I = size(data, 2)
     rp = ResponsePatterns(data; response_ind)
