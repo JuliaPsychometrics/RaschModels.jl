@@ -32,7 +32,7 @@ function expected_score(
 ) where {F}
     M = model_type(model)
     betas = view(model.item_parameters, is)
-    score = expected_score(M, theta, betas; scoring_function)
+    score = expected_score(M, theta, vec(betas); scoring_function)
     return score
 end
 
@@ -44,7 +44,7 @@ function information(
 ) where {F}
     M = model_type(model)
     betas = view(model.item_parameters, is)
-    info = information(M, theta, betas; scoring_function)
+    info = information(M, theta, vec(betas); scoring_function)
     return info
 end
 

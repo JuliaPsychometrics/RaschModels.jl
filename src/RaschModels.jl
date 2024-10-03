@@ -8,7 +8,7 @@ using ItemResponseFunctions: ItemParameters, OnePL, PCM, RSM
 using LinearAlgebra: I
 using MCMCChains: Chains, namesingroup
 using Optim: MultivariateOptimizationResults, optimize, BFGS
-using PersonParameters: PersonParameterAlgorithm, person_parameters
+using PersonParameters: PersonParameterAlgorithm, person_parameters, value
 using Reexport: @reexport
 using Turing: @model, @addlogprob!, condition, sample, filldist, logpdf, BernoulliLogit
 using Turing.Inference: InferenceAlgorithm

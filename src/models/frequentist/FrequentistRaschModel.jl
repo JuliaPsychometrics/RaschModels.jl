@@ -20,3 +20,11 @@ function make_rasch_item_parameters(estimate::StatisticalModel)
     item_pars = [ItemParameters(OnePL; b) for b in estimate.values]
     return DimArray(item_pars, :item)
 end
+
+function getitemlocations(model::FrequentistRaschModel, i, y)
+    return model.item_parameters[i].b
+end
+
+function getpersonlocations(model::FrequentistRaschModel, i)
+    return value(model.person_parameters[i])
+end

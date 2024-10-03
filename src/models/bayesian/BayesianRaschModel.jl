@@ -61,3 +61,11 @@ end
 function Rasch(eta::Real)
     return BernoulliLogit(eta)
 end
+
+function getitemlocations(model::BayesianRaschModel, i, y)
+    return vec(getfield.(model.item_parameters[:, i], :b))
+end
+
+function getpersonlocations(model::BayesianRaschModel, i)
+    return vec(model.person_parameters[:, i])
+end
