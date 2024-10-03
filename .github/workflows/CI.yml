@@ -43,20 +43,23 @@ jobs:
   docs:
     name: Documentation
     runs-on: ubuntu-latest
+    concurrency:
+      group: pages
+      cancel-in-progress: false
     permissions:
       contents: write
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
       - uses: julia-actions/setup-julia@v1
-        with:
-          version: '1'
-      - uses: julia-actions/julia-buildpkg@v1
+      - uses: julia-actions/cache@v1
+      - run: julia --project=docs -e 'using Pkg; pkg"dev ."; Pkg.instantiate(); Pkg.precompile(); Pkg.status()'
       - uses: julia-actions/julia-docdeploy@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      - run: |
-          julia --project=docs -e '
-            using Documenter: DocMeta, doctest
-            using RaschModels
-            DocMeta.setdocmeta!(RaschModels, :DocTestSetup, :(using RaschModels); recursive=true)
-            doctest(RaschModels)'
+      - name: Run doctests
+        shell: julia --project=docs --color=yes {0}
+        run: |
+          using Documenter: DocMeta, doctest
+          using RaschModels
+          DocMeta.setdocmeta!(RaschModels, :DocTestSetup, :(using RaschModels); recursive=true)
+          doctest(RaschModels)
