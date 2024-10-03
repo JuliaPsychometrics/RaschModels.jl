@@ -6,7 +6,7 @@ DocMeta.setdocmeta!(RaschModels, :DocTestSetup, :(using RaschModels); recursive 
 
 makedocs(;
     sitename = "RaschModels.jl",
-    authors = ["Philipp Gewessler", "Tobias Alfers"],
+    authors = "Philipp Gewessler",
     modules = [RaschModels],
     warnonly = true,
     checkdocs = :all,
