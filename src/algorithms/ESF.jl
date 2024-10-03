@@ -1,7 +1,29 @@
 """
-    ESF{T<:AbstractFloat}
+    $(TYPEDEF)
 
-Basic struct to store elementary symmetric functions up to their second derivative.
+The `ESFAlgorithm` describes the algorithm of calculating elementary symmetric functions for
+the model.
+"""
+abstract type ESFAlgorithm end
+
+"""
+    $(TYPEDEF)
+
+Summation algorithm for calculating elementary symmetric functions and their derivatives
+(Fischer, 1974).
+
+# References
+
+- Fischer, G. H. (1974). *Einfühung in die Theorie psychologischer Tests: Grundlagen und
+  Anwendungen*. Huber.
+
+"""
+struct SummationAlgorithm <: ESFAlgorithm end
+
+"""
+    $(TYPEDEF)
+
+A struct to store elementary symmetric functions up to their second derivative.
 """
 mutable struct ESF{T<:AbstractFloat}
     γ0::Vector{T}
@@ -16,41 +38,6 @@ function ESF(I::Int; R::Int = I + 1)
     γ1 = zeros(Float64, R, I)
     γ2 = zeros(Float64, R, I, I)
     return ESF(γ0, γ1, γ2, I, R)
-end
-
-"""
-    ESFAlgorithm
-
-The `ESFAlgorithm` describes the algorithm of calculating elementary symmetric functions for
-the model.
-"""
-abstract type ESFAlgorithm end
-
-"""
-    SummationAlgorithm <: ESFAlgorithm
-
-Summation algorithm for calculating elementary symmetric functions and their derivatives
-(Fischer, 1974).
-
-# References
-
-- Fischer, G. H. (1974). *Einfühung in die Theorie psychologischer Tests: Grundlagen und
-  Anwendungen*. Huber.
-
-"""
-struct SummationAlgorithm <: ESFAlgorithm end
-
-# elementary symmetric function of order 0
-function _esf0!(
-    alg::SummationAlgorithm,
-    esfstate::ESF,
-    ϵ::AbstractVector{T},
-) where {T<:AbstractFloat}
-    (; γ0, R) = esfstate
-    γtemp = copy(γ0)
-
-    _esf!(alg, γ0, γtemp, ϵ, R)
-    return nothing
 end
 
 function _esf!(
@@ -75,7 +62,18 @@ function _esf!(
     return nothing
 end
 
-# elementary symmetric function of order 1
+function _esf0!(
+    alg::SummationAlgorithm,
+    esfstate::ESF,
+    ϵ::AbstractVector{T},
+) where {T<:AbstractFloat}
+    (; γ0, R) = esfstate
+    γtemp = copy(γ0)
+
+    _esf!(alg, γ0, γtemp, ϵ, R)
+    return nothing
+end
+
 function _esf1!(
     ::SummationAlgorithm,
     esfstate::ESF,
@@ -102,7 +100,6 @@ function _esf1!(
     return nothing
 end
 
-# elementary symmetric function of order 2
 function _esf2!(
     ::SummationAlgorithm,
     esfstate::ESF,
@@ -135,7 +132,7 @@ function _esf2!(
 end
 
 """
-    esf(ϵ::Vector{<:AbstractFloat}, alg::{<:ESFAlgorithm}; order::Int)
+    $(SIGNATURES)
 
 Computation of elementary symmetric functions (ESFs) and their derivatives for dichotomous
 responses up to a user-specified `order`.

@@ -1,17 +1,20 @@
 module RaschModels
 
 using AbstractItemResponseModels
-using LogExpFunctions
-using Optim
-using Roots
-using Reexport
-using ReverseDiff
-using Turing
+using DimensionalData: AbstractDimArray, DimArray
+using Distributions: ContinuousUnivariateDistribution, Normal, InverseGamma, Categorical
+using DocStringExtensions: TYPEDEF, FIELDS, SIGNATURES
+using ItemResponseFunctions: ItemParameters, OnePL, PCM, RSM
+using LinearAlgebra: I
+using MCMCChains: Chains, namesingroup
+using Optim: MultivariateOptimizationResults, optimize, BFGS
+using PersonParameters: PersonParameterAlgorithm, person_parameters, value
+using Reexport: @reexport
+using Turing: @model, @addlogprob!, condition, sample, filldist, logpdf, BernoulliLogit
+using Turing.Inference: InferenceAlgorithm
 
-using NamedArrays
-using LinearAlgebra
-
-import LinearAlgebra: I
+import ReverseDiff
+import Optim: optimize
 import StatsAPI:
     StatisticalModel,
     coef,
@@ -22,43 +25,36 @@ import StatsAPI:
     vcov,
     stderror,
     loglikelihood
-import StatsBase: CoefTable
-import AbstractItemResponseModels:
-    response_type, person_dimensionality, item_dimensionality, estimation_type
 
-@reexport begin
-    import AbstractItemResponseModels:
-        irf, iif, expected_score, information, fit, getitemlocations, getpersonlocations
-end
+@reexport import AbstractItemResponseModels:
+    estimation_type,
+    expected_score,
+    fit,
+    getitemlocations,
+    getpersonlocations,
+    iif,
+    information,
+    irf,
+    item_dimensionality,
+    person_dimensionality,
+    response_type
 
-@reexport begin
-    using Turing: MH, HMC, NUTS, MLE, MAP
-    using Turing: MCMCSerial, MCMCThreads, MCMCDistributed
-end
+@reexport using PersonParameters: WLE, MLE, MAP, EAP
+@reexport using Turing: NUTS, MCMCThreads, MCMCDistributed, AutoReverseDiff
 
-export PartialCreditModel
-export RatingScaleModel
-export RaschModel
+export Prior,
+    AbstractRaschModel,
+    RaschModel,
+    PartialCreditModel,
+    RatingScaleModel,
+    CML,
+    SummationAlgorithm
 
-export CML, SummationAlgorithm
-export PersonParameterWLE, PersonParameterMLE
-
-include("utils.jl")
-include("types.jl")
 include("priors.jl")
 include("missings.jl")
-
-include("models/RaschModel.jl")
-include("models/PolytomousRaschModel.jl")
-include("models/PartialCreditModel.jl")
-include("models/RatingScaleModel.jl")
-
-include("turing_model.jl")
-
-include("esf.jl")
-include("cml.jl")
-include("personpars.jl")
-
+include("models/models.jl")
+include("algorithms/algorithms.jl")
 include("fit.jl")
+include("utils.jl")
 
 end

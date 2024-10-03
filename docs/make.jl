@@ -1,24 +1,35 @@
 using RaschModels
 using Documenter
+using DocumenterVitepress
 
 DocMeta.setdocmeta!(RaschModels, :DocTestSetup, :(using RaschModels); recursive = true)
 
 makedocs(;
-    modules = [RaschModels],
-    authors = "Philipp Gewessler",
-    repo = "https://github.com/JuliaPsychometrics/RaschModels.jl/blob/{commit}{path}#{line}",
     sitename = "RaschModels.jl",
-    format = Documenter.HTML(;
-        prettyurls = get(ENV, "CI", "false") == "true",
-        canonical = "https://juliapsychometrics.github.io/RaschModels.jl",
-        edit_link = "main",
-        assets = String[],
+    authors = "Philipp Gewessler",
+    modules = [RaschModels],
+    warnonly = true,
+    checkdocs = :all,
+    format = DocumenterVitepress.MarkdownVitepress(
+        repo = "github.com/JuliaPsychometrics/RaschModels.jl",
+        devbranch = "main",
+        devurl = "dev",
     ),
+    clean = true,
+    draft = false,
+    source = "src",
+    build = "build",
     pages = [
         "Home" => "index.md",
         "Tutorials" => ["Bayesian modeling" => "tutorials/bayesian_modeling.md"],
-        "API" => ["Types" => "api/types.md", "Functions" => "api/functions.md"],
+        "API" => "api.md",
     ],
 )
 
-deploydocs(; repo = "github.com/JuliaPsychometrics/RaschModels.jl", devbranch = "main")
+deploydocs(
+    repo = "github.com/JuliaPsychometrics/RaschModels.jl",
+    target = "build",
+    branch = "gh-pages",
+    devbranch = "main",
+    push_preview = true,
+)

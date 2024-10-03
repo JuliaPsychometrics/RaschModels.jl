@@ -1,4 +1,3 @@
-UN{T} = Union{T,Nothing}
 isresponse(x) = !ismissing(x)
 
 """
@@ -44,34 +43,6 @@ function construct_response_vector(
 end
 
 """
-    betanames(n)
-
-Construct a vector of parameter names for item difficulties/locations.
-"""
-function betanames(n)
-    return [Symbol("beta[", i, "]") for i in 1:n]
-end
-
-"""
-    thetanames(n)
-
-Construct a vector of parameter names for person parameters.
-"""
-function thetanames(n)
-    return [Symbol("theta[", p, "]") for p in 1:n]
-end
-
-"""
-    taunames(n; item=nothing)
-
-Construct a vector of parameter names for item thresholds.
-"""
-function taunames(n; item = nothing)
-    item_str = isnothing(item) ? "" : string("[", item, "]")
-    return [Symbol("tau", item_str, "[", i, "]") for i in 1:n]
-end
-
-"""
     gettotals(s::AbstractVector{T}, minvalue::T, maxvalue::T) where {T<:Int}
 
 Helper function to obtain totals for a marginal score vector `s` (row or column scores) from `minvalue` to `maxvalue`.
@@ -85,23 +56,6 @@ function gettotals(s::AbstractVector{T}, minvalue::T, maxvalue::T) where {T<:Int
     return totals[(minvalue+1):end]
 end
 
-"""
-    normalize_sumzero!(values::AbstractVector, vcov::AbstractMatrix{T}; I::Int = length(values)) where {T<:AbstractFloat}
-
-normalize estimated values of a Rasch model from β[1]=0 to ∑β = 0
-"""
-function normalize_sumzero!(
-    values::AbstractVector,
-    vcov::AbstractMatrix{T};
-    I::Int = length(values),
-) where {T<:AbstractFloat}
-    values[1] == 0 || throw(DomainError("first element of values must be zero."))
-    values .-= (sum(values) / I)
-    D = LinearAlgebra.I(I) .- 1 / I
-    vcov .= D * vcov * D'
-    return nothing
-end
-
 function getrowsums(data; P = size(data, 1), I = size(data, 2))
     rs = zeros(Int, P)
 
@@ -109,9 +63,9 @@ function getrowsums(data; P = size(data, 1), I = size(data, 2))
         for i in 1:I
             response = data[p, i]
             if isresponse(response)
-                rs[p] += response    
+                rs[p] += response
             end
-        end 
+        end
     end
 
     return rs
@@ -123,10 +77,10 @@ function getcolsums(data; P = size(data, 1), I = size(data, 2))
     for i in eachindex(cs)
         for p in 1:P
             response = data[p, i]
-            if isresponse(response) 
-                cs[i] += response    
+            if isresponse(response)
+                cs[i] += response
             end
-        end 
+        end
     end
 
     return cs
