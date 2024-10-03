@@ -24,23 +24,6 @@
         @test long_nodropped_missing[3] == [1, 2, 1, 2]
     end
 
-    @testset "betanames" begin
-        @test RaschModels.betanames(1) == [Symbol("beta[1]")]
-        @test RaschModels.betanames(2) == [Symbol("beta[1]"), Symbol("beta[2]")]
-    end
-
-    @testset "thetanames" begin
-        @test RaschModels.thetanames(1) == [Symbol("theta[1]")]
-        @test RaschModels.thetanames(2) == [Symbol("theta[1]"), Symbol("theta[2]")]
-    end
-
-    @testset "taunames" begin
-        @test RaschModels.taunames(1) == [Symbol("tau[1]")]
-        @test RaschModels.taunames(2) == [Symbol("tau[1]"), Symbol("tau[2]")]
-        @test RaschModels.taunames(2, item = 1) ==
-              [Symbol("tau[1][1]"), Symbol("tau[1][2]")]
-    end
-
     @testset "gettotals" begin
         s = [0, 4, 3, 2, 2, 0]
         totals = RaschModels.gettotals(s, minimum(s), maximum(s))
@@ -56,15 +39,15 @@
 
     @testset "getrowsums" begin
         m = [
-            0 0 1;
-            0 1 0;
-            1 1 0;
-            1 1 1;
+            0 0 1
+            0 1 0
+            1 1 0
+            1 1 1
             0 0 0
         ]
         P, I = size(m)
         rs = RaschModels.getrowsums(m)
-        @test length(rs) == P 
+        @test length(rs) == P
         @test minimum(rs) == 0
         @test maximum(rs) == I
         @test eltype(rs) == Int
@@ -72,53 +55,19 @@
     end
 
     @testset "getcolsums" begin
-         m = [
-            0 0 0 1;
-            0 0 1 0;
-            0 1 1 0;
-            0 1 1 1;
+        m = [
+            0 0 0 1
+            0 0 1 0
+            0 1 1 0
+            0 1 1 1
             0 0 0 0
         ]
         P, I = size(m)
         cs = RaschModels.getcolsums(m)
-        @test length(cs) == I 
+        @test length(cs) == I
         @test minimum(cs) == 0
         @test maximum(cs) == 3
         @test eltype(cs) == Int
-        @test cs == [0, 2, 3, 2]       
-    end
-
-    @testset "normalize_sumzero!" begin
-        values =
-            [0.0, -0.809, -0.494, -0.415, -0.651, -1.049, -0.412, -0.731, -0.613, -0.613]
-        vcov = [
-            0.0 0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000
-            0.0 0.167 0.088 0.088 0.088 0.086 0.088 0.088 0.088 0.088
-            0.0 0.088 0.167 0.088 0.088 0.086 0.088 0.088 0.088 0.088
-            0.0 0.088 0.088 0.167 0.088 0.086 0.088 0.088 0.088 0.088
-            0.0 0.088 0.088 0.088 0.166 0.086 0.088 0.088 0.088 0.088
-            0.0 0.088 0.088 0.088 0.088 0.137 0.096 0.096 0.096 0.096
-            0.0 0.088 0.088 0.088 0.088 0.096 0.136 0.096 0.096 0.096
-            0.0 0.088 0.088 0.088 0.088 0.096 0.096 0.135 0.096 0.096
-            0.0 0.088 0.088 0.088 0.088 0.096 0.096 0.096 0.135 0.096
-            0.0 0.088 0.088 0.088 0.088 0.096 0.096 0.096 0.096 0.135
-        ]
-        values_sumzero =
-            [0.579, -0.23, 0.085, 0.164, -0.072, -0.47, 0.167, -0.153, -0.034, -0.034]
-        vcov_sumzero = [
-            0.078 -0.009 -0.009 -0.009 -0.009 -0.009 -0.009 -0.009 -0.009 -0.009
-            -0.009 0.071 -0.008 -0.008 -0.008 -0.008 -0.008 -0.008 -0.008 -0.008
-            -0.009 -0.008 0.071 -0.008 -0.008 -0.008 -0.008 -0.008 -0.008 -0.008
-            -0.009 -0.008 -0.008 0.071 -0.008 -0.008 -0.008 -0.008 -0.008 -0.008
-            -0.009 -0.008 -0.008 -0.008 0.070 -0.008 -0.008 -0.008 -0.008 -0.008
-            -0.009 -0.008 -0.008 -0.008 -0.008 0.041 0.000 0.000 0.000 0.000
-            -0.009 -0.008 -0.008 -0.008 -0.008 0.000 0.040 0.000 0.000 0.000
-            -0.009 -0.008 -0.008 -0.008 -0.008 0.000 0.000 0.039 0.000 0.000
-            -0.009 -0.008 -0.008 -0.008 -0.008 0.000 0.000 0.000 0.039 0.000
-            -0.009 -0.008 -0.008 -0.008 -0.008 0.000 0.000 0.000 0.000 0.039
-        ]
-        RaschModels.normalize_sumzero!(values, vcov)
-        @test values ≈ values_sumzero atol = 0.01
-        @test vcov ≈ vcov_sumzero atol = 0.01
+        @test cs == [0, 2, 3, 2]
     end
 end

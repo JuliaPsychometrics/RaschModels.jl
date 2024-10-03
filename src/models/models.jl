@@ -16,6 +16,10 @@ person_dimensionality(::Type{<:AbstractRaschModel}) = AbstractItemResponseModels
 item_dimensionality(::Type{<:AbstractRaschModel}) = AbstractItemResponseModels.Univariate
 
 abstract type RaschModel{T} <: AbstractRaschModel{T} end
+
+response_type(::Type{<:RaschModel}) = AbstractItemResponseModels.Dichotomous
+model_type(::Type{<:RaschModel}) = OnePL
+
 abstract type PartialCreditModel{T} <: AbstractRaschModel{T} end
 abstract type RatingScaleModel{T} <: AbstractRaschModel{T} end
 

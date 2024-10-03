@@ -16,9 +16,6 @@ function FrequentistRaschModel(data, estimate; alg_pp = WLE())
     return FrequentistRaschModel(data, estimate, item_parameters, person_pars)
 end
 
-response_type(::Type{<:FrequentistRaschModel}) = AbstractItemResponseModels.Dichotomous
-model_type(::Type{<:FrequentistRaschModel}) = OnePL
-
 function make_rasch_item_parameters(estimate::StatisticalModel)
     item_pars = [ItemParameters(OnePL; b) for b in estimate.values]
     return DimArray(item_pars, :item)

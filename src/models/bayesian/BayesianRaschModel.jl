@@ -31,9 +31,6 @@ function BayesianRaschModel(data, prior, chain)
     return BayesianRaschModel(data, prior, chain, item_parameters, person_parameters)
 end
 
-response_type(::Type{<:BayesianRaschModel}) = AbstractItemResponseModels.Dichotomous
-model_type(::Type{<:BayesianRaschModel}) = OnePL
-
 function make_rasch_item_parameters(chain::Chains)
     parnames = namesingroup(chain, :beta)
     arr = Array(chain[parnames])

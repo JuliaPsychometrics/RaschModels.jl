@@ -11,7 +11,7 @@
             end
 
             @testset "SamplingEstimate" test_interface(model, data, MH(), 100)
-            @testset "PointEstimate" test_interface(model, data, MLE())
+            @testset "PointEstimate" test_interface(model, data, CML())
         end
     end
 end

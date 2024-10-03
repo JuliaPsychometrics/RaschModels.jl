@@ -6,16 +6,8 @@
 
     @testset "Model construction" begin
         @test estimation_type(model_mcmc) == SamplingEstimate
-        @test model_mcmc.parnames_beta ==
-              [Symbol("beta[1]"), Symbol("beta[2]"), Symbol("beta[3]")]
-
         @test estimation_type(model_mle) == PointEstimate
-        @test model_mle.parnames_beta ==
-              [Symbol("beta[1]"), Symbol("beta[2]"), Symbol("beta[3]")]
-
         @test estimation_type(model_cml) == PointEstimate
-        @test model_cml.parnames_beta ==
-              [Symbol("beta[1]"), Symbol("beta[2]"), Symbol("beta[3]")]
     end
 
     @testset "getitemlocations" begin

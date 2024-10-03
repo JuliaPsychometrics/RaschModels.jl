@@ -36,7 +36,8 @@ import StatsAPI:
     information,
     irf,
     item_dimensionality,
-    person_dimensionality
+    person_dimensionality,
+    response_type
 
 @reexport using PersonParameters: WLE, MLE, MAP, EAP
 @reexport using Turing: NUTS, MCMCThreads, MCMCDistributed, AutoReverseDiff
